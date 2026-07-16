@@ -532,6 +532,30 @@ button {
   gap: 1px;
 }
 
+.spend-item-clickable {
+  width: 100%;
+  text-align: left;
+}
+
+.cal-nav.standalone {
+  padding: 0 2px 14px;
+}
+
+.spend-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 0;
+}
+
+.spend-card-header .icon-btn {
+  margin: -6px -6px -6px 0;
+}
+
+.spend-total-tight {
+  padding-top: 4px;
+}
+
 /* ---------- editor sheet ---------- */
 
 .sheet-overlay {

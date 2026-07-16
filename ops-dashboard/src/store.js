@@ -7,11 +7,14 @@ import { localToday } from './dates.js';
 
 const KEY = 'ops-tasks-v1';
 const SNAP_PREFIX = 'ops-snapshot-';
+const SPEND_KEY = 'ops-personal-spend-v1';
+const SPEND_SNAP_PREFIX = 'ops-spend-snapshot-';
 const SNAPS_TO_KEEP = 3;
 
 export const CATEGORIES = ['maintenance', 'housekeeping', 'ops', 'personal'];
 export const PROPERTIES = ['MRP', 'LB', 'Kove'];
 export const PRIORITIES = ['high', 'med', 'low'];
+export const SPEND_CATEGORIES = ['Groceries', 'Transport', 'Bills', 'Dining', 'Shopping', 'Other'];
 
 export const sentenceCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -72,7 +75,7 @@ export function getTasks() {
 export function saveTasks(tasks) {
   try {
     localStorage.setItem(KEY, JSON.stringify(tasks));
-    snapshot(tasks);
+    snapshot(SNAP_PREFIX, tasks);
     return true;
   } catch (e) {
     console.error('Failed to save tasks', e);
@@ -83,17 +86,70 @@ export function saveTasks(tasks) {
 // Rolling daily snapshots inside localStorage — survives an accidental
 // bulk-delete or a bad import, though NOT a full browser-data wipe.
 // For that, use the JSON backup download.
-function snapshot(tasks) {
+function snapshot(prefix, data) {
   try {
-    localStorage.setItem(SNAP_PREFIX + localToday(), JSON.stringify(tasks));
+    localStorage.setItem(prefix + localToday(), JSON.stringify(data));
     const snapKeys = Object.keys(localStorage)
-      .filter((k) => k.startsWith(SNAP_PREFIX))
+      .filter((k) => k.startsWith(prefix))
       .sort();
     while (snapKeys.length > SNAPS_TO_KEEP) {
       localStorage.removeItem(snapKeys.shift());
     }
   } catch (e) {
     /* snapshots are best-effort */
+  }
+}
+
+/* ---------- personal spend entries (not tied to a task) ---------- */
+
+export function newSpend(data) {
+  return {
+    id: makeId(),
+    amount: 0,
+    description: '',
+    category: null,
+    date: localToday(),
+    createdAt: localToday(),
+    ...data,
+  };
+}
+
+// Coerce anything (old versions, hand-edited backups) into a valid entry.
+export function normalizeSpend(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const description = typeof raw.description === 'string' ? raw.description.trim() : '';
+  const amount = Number(raw.amount);
+  if (!description || !Number.isFinite(amount) || amount <= 0) return null;
+  const dateRe = /^\d{4}-\d{2}-\d{2}/;
+  return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : makeId(),
+    amount,
+    description,
+    category: typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : null,
+    date: dateRe.test(raw.date) ? raw.date.slice(0, 10) : localToday(),
+    createdAt: dateRe.test(raw.createdAt) ? raw.createdAt : localToday(),
+  };
+}
+
+export function getPersonalSpend() {
+  try {
+    const raw = localStorage.getItem(SPEND_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return (Array.isArray(list) ? list : []).map(normalizeSpend).filter(Boolean);
+  } catch (e) {
+    console.error('Failed to read personal spend', e);
+    return [];
+  }
+}
+
+export function savePersonalSpend(entries) {
+  try {
+    localStorage.setItem(SPEND_KEY, JSON.stringify(entries));
+    snapshot(SPEND_SNAP_PREFIX, entries);
+    return true;
+  } catch (e) {
+    console.error('Failed to save personal spend', e);
+    return false;
   }
 }
 
@@ -113,12 +169,13 @@ export function rolloverTasks(tasks, today = localToday()) {
 
 /* ---------- JSON backup & restore (mirrors maintenance-tracker) ---------- */
 
-export function downloadBackup(tasks) {
+export function downloadBackup(tasks, personalSpend) {
   const payload = {
     app: 'ops-dashboard',
     version: 1,
     exported: new Date().toISOString(),
     tasks,
+    personalSpend,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -128,7 +185,9 @@ export function downloadBackup(tasks) {
   URL.revokeObjectURL(a.href);
 }
 
-// Reads a backup file. Returns { tasks, count } or throws with a friendly message.
+// Reads a backup file. Returns { tasks, personalSpend, count } or throws
+// with a friendly message. `count` covers both lists combined so the
+// import confirmation can show one number.
 export function parseBackupFile(text) {
   let data;
   try {
@@ -136,21 +195,27 @@ export function parseBackupFile(text) {
   } catch {
     throw new Error('That file is not valid JSON.');
   }
-  const list = Array.isArray(data) ? data : data.tasks;
-  if (!Array.isArray(list)) throw new Error('No tasks found in that file.');
-  const tasks = list.map(normalizeTask).filter(Boolean);
-  if (!tasks.length) throw new Error('That file does not look like an ops-dashboard backup.');
-  return { tasks, count: tasks.length };
+  const taskList = Array.isArray(data) ? data : data.tasks;
+  const spendList = Array.isArray(data) ? [] : data.personalSpend;
+  const tasks = Array.isArray(taskList) ? taskList.map(normalizeTask).filter(Boolean) : [];
+  const personalSpend = Array.isArray(spendList) ? spendList.map(normalizeSpend).filter(Boolean) : [];
+  if (!tasks.length && !personalSpend.length) {
+    throw new Error('That file does not look like an ops-dashboard backup.');
+  }
+  return { tasks, personalSpend, count: tasks.length + personalSpend.length };
 }
 
-// Merge imported tasks with current ones — imported wins on ID clash,
-// so exporting on the phone and importing on the laptop never loses
-// tasks that only exist on the laptop.
-export function mergeTasks(current, imported) {
+// Merge imported items with current ones by id — imported wins on a
+// clash, so exporting on the phone and importing on the laptop never
+// loses items that only exist on the laptop.
+function mergeById(current, imported) {
   const map = new Map(current.map((t) => [t.id, t]));
   for (const t of imported) map.set(t.id, t);
   return [...map.values()];
 }
+
+export const mergeTasks = mergeById;
+export const mergePersonalSpend = mergeById;
 
 export const formatRand = (n) => {
   const [whole, frac] = (Number(n) || 0).toFixed(2).split('.');

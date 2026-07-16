@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { downloadBackup, parseBackupFile } from '../store.js';
 
-export default function Header({ tasks, onAdd, onImport }) {
+export default function Header({ tasks, personalSpend, onAdd, onImport }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const fileRef = useRef(null);
@@ -20,11 +20,12 @@ export default function Header({ tasks, onAdd, onImport }) {
     e.target.value = '';
     if (!file) return;
     try {
-      const { tasks: imported, count } = parseBackupFile(await file.text());
+      const parsed = parseBackupFile(await file.text());
+      const currentCount = tasks.length + personalSpend.length;
       const ok = window.confirm(
-        `Import ${count} task${count === 1 ? '' : 's'}? They will be merged into your current ${tasks.length}.`
+        `Import ${parsed.count} item${parsed.count === 1 ? '' : 's'}? They will be merged into your current ${currentCount}.`
       );
-      if (ok) onImport(imported);
+      if (ok) onImport(parsed);
     } catch (err) {
       window.alert(err.message);
     }
@@ -54,7 +55,7 @@ export default function Header({ tasks, onAdd, onImport }) {
                   className="menu-item"
                   onClick={() => {
                     setMenuOpen(false);
-                    downloadBackup(tasks);
+                    downloadBackup(tasks, personalSpend);
                   }}
                 >
                   Export data
