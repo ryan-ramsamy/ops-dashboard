@@ -37,6 +37,19 @@ Gotchas learned the hard way:
   scope to `.sheet .btn-primary` for the submit.
 - Import goes through a hidden `input[type=file]` — `setInputFiles` works.
 - Export: `page.waitForEvent('download')` around clicking "Export data".
+- Testing swipe-to-delete (TasksView/SwipeableTaskRow): create the context
+  with `hasTouch: true, isMobile: true` so `new Touch()`/`new TouchEvent()`
+  work at all. Dispatch synthetic touch events on `.swipe-content` — the
+  element the handlers are actually bound to — **not** the outer
+  `.swipe-row` wrapper; dispatching on a parent never reaches a child's
+  listeners since events only propagate through ancestors, not descendants.
+  Also: `getByText('Water the plants')` without `{ exact: true }` will
+  false-positive-match the undo toast's "Deleted “Water the plants”" text —
+  use exact matching whenever a delete/undo flow is in play.
+- Done section: tasks completed on a prior day, or any task inside a
+  collapsed "Done" group, aren't just hidden — the row isn't rendered until
+  expanded. `getByText(...).waitFor()` on a done task will time out unless
+  you click the "Done (N)" toggle first.
 
 ## Flows worth driving
 

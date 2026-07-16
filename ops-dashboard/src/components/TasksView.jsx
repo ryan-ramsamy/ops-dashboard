@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CATEGORIES, sentenceCase } from '../store.js';
 import { localToday } from '../dates.js';
-import TaskRow from './TaskRow.jsx';
+import SwipeableTaskRow from './SwipeableTaskRow.jsx';
 
+const UNDO_MS = 3500;
 const PRIORITY_RANK = { high: 0, med: 1, low: 2 };
 
 // Open tasks first, then by priority, then title.
@@ -19,34 +20,121 @@ function byDateThenPriority(a, b) {
   return byPriority(a, b);
 }
 
-function Group({ label, tasks, onToggle, onEdit, showDate = false }) {
+function Group({ label, tasks, onToggle, onEdit, onDeleteRequest, showDate, openSwipeId, setOpenSwipeId }) {
   if (!tasks.length) return null;
   return (
     <section className="group">
       <h2 className="group-label">{label}</h2>
       <div className="card">
         {tasks.map((t) => (
-          <TaskRow key={t.id} task={t} onToggle={onToggle} onEdit={onEdit} showDate={showDate} />
+          <SwipeableTaskRow
+            key={t.id}
+            task={t}
+            onToggle={onToggle}
+            onEdit={onEdit}
+            onDeleteRequest={onDeleteRequest}
+            showDate={showDate}
+            isOpen={openSwipeId === t.id}
+            onOpenChange={(open) => setOpenSwipeId(open ? t.id : null)}
+          />
         ))}
       </div>
     </section>
   );
 }
 
-export default function TasksView({ tasks, onToggle, onEdit }) {
+function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipeId, setOpenSwipeId }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!tasks.length) return null;
+  return (
+    <section className="group">
+      <button
+        className="group-label done-toggle"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((e) => !e)}
+      >
+        <span>
+          Done <span className="done-count">({tasks.length})</span>
+        </span>
+        <span className={`done-caret ${expanded ? 'open' : ''}`}>▸</span>
+      </button>
+      {expanded && (
+        <div className="card">
+          {tasks.map((t) => (
+            <SwipeableTaskRow
+              key={t.id}
+              task={t}
+              onToggle={onToggle}
+              onEdit={onEdit}
+              onDeleteRequest={onDeleteRequest}
+              isOpen={openSwipeId === t.id}
+              onOpenChange={(open) => setOpenSwipeId(open ? t.id : null)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
   const [filter, setFilter] = useState('all');
+  const [openSwipeId, setOpenSwipeId] = useState(null);
+  const [hiddenIds, setHiddenIds] = useState(() => new Set());
+  const [toast, setToast] = useState(null); // { id, title } | null
+  const timeoutRef = useRef(null);
   const today = localToday();
 
-  // Completed tasks stay visible (struck through) for the rest of the day,
-  // then drop off the list. They remain in the data for Spend history.
-  const visible = tasks.filter((t) => !t.done || t.completedAt === today);
-  const filtered = filter === 'all' ? visible : visible.filter((t) => t.category === filter);
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
-  const dueToday = filtered.filter((t) => t.dueDate && t.dueDate <= today).sort(byPriority);
-  const upcoming = filtered
+  const finalizeDelete = (id) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
+    onDelete(id);
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setToast(null);
+  };
+
+  const requestDelete = (task) => {
+    // Only one undo toast at a time — finalize whatever was pending.
+    if (toast) finalizeDelete(toast.id);
+    setHiddenIds((prev) => new Set(prev).add(task.id));
+    setToast({ id: task.id, title: task.title });
+    timeoutRef.current = setTimeout(() => finalizeDelete(task.id), UNDO_MS);
+  };
+
+  const undoDelete = () => {
+    if (!toast) return;
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
+    const id = toast.id;
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setToast(null);
+  };
+
+  const notHidden = tasks.filter((t) => !hiddenIds.has(t.id));
+  const filtered = filter === 'all' ? notHidden : notHidden.filter((t) => t.category === filter);
+
+  // Completed tasks stay eligible (for the "Done" section) for the rest
+  // of the day, then drop off the list entirely. They remain in the
+  // data for Spend history regardless.
+  const eligible = filtered.filter((t) => !t.done || t.completedAt === today);
+  const openTasks = eligible.filter((t) => !t.done);
+  const doneTasks = eligible.filter((t) => t.done).sort(byPriority);
+
+  const dueToday = openTasks.filter((t) => t.dueDate && t.dueDate <= today).sort(byPriority);
+  const upcoming = openTasks
     .filter((t) => t.dueDate && t.dueDate > today)
     .sort(byDateThenPriority);
-  const someday = filtered.filter((t) => !t.dueDate).sort(byPriority);
+  const someday = openTasks.filter((t) => !t.dueDate).sort(byPriority);
 
   const empty = !dueToday.length && !upcoming.length && !someday.length;
 
@@ -64,17 +152,66 @@ export default function TasksView({ tasks, onToggle, onEdit }) {
         ))}
       </div>
 
-      {empty ? (
+      {empty && !doneTasks.length ? (
         <div className="empty">
           <p>No tasks{filter === 'all' ? ' yet' : ' in this category'}.</p>
           <p className="empty-hint">Tap + to add one.</p>
         </div>
       ) : (
         <>
-          <Group label="Due today" tasks={dueToday} onToggle={onToggle} onEdit={onEdit} />
-          <Group label="Upcoming" tasks={upcoming} onToggle={onToggle} onEdit={onEdit} showDate />
-          <Group label="Someday" tasks={someday} onToggle={onToggle} onEdit={onEdit} />
+          {empty && (
+            <div className="empty">
+              <p>No open tasks{filter === 'all' ? '' : ' in this category'}.</p>
+              <p className="empty-hint">Tap + to add one.</p>
+            </div>
+          )}
+          <Group
+            label="Due today"
+            tasks={dueToday}
+            onToggle={onToggle}
+            onEdit={onEdit}
+            onDeleteRequest={requestDelete}
+            openSwipeId={openSwipeId}
+            setOpenSwipeId={setOpenSwipeId}
+          />
+          <Group
+            label="Upcoming"
+            tasks={upcoming}
+            onToggle={onToggle}
+            onEdit={onEdit}
+            onDeleteRequest={requestDelete}
+            showDate
+            openSwipeId={openSwipeId}
+            setOpenSwipeId={setOpenSwipeId}
+          />
+          <Group
+            label="Someday"
+            tasks={someday}
+            onToggle={onToggle}
+            onEdit={onEdit}
+            onDeleteRequest={requestDelete}
+            openSwipeId={openSwipeId}
+            setOpenSwipeId={setOpenSwipeId}
+          />
         </>
+      )}
+
+      <DoneGroup
+        tasks={doneTasks}
+        onToggle={onToggle}
+        onEdit={onEdit}
+        onDeleteRequest={requestDelete}
+        openSwipeId={openSwipeId}
+        setOpenSwipeId={setOpenSwipeId}
+      />
+
+      {toast && (
+        <div className="undo-toast">
+          <span className="undo-toast-text">Deleted “{toast.title}”</span>
+          <button className="undo-toast-action" onClick={undoDelete}>
+            Undo
+          </button>
+        </div>
       )}
     </div>
   );
