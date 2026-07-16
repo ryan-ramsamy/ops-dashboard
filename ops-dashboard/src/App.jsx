@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTasks } from './hooks/useTasks.js';
 import { useSpend } from './hooks/useSpend.js';
 import { localToday } from './dates.js';
@@ -27,6 +27,24 @@ export default function App() {
   const openAdd = () =>
     setEditor({ defaults: tab === 'calendar' ? { dueDate: selectedDate } : {} });
   const openEdit = (task) => setEditor({ task });
+
+  // "n" opens quick-add from anywhere on the Tasks/Calendar tabs (mirrors
+  // the header's + button) — for the laptop/browser-tab use case, where
+  // there's no thumb reaching for a corner button. Ignored while typing
+  // in any field, or while a sheet is already open.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (editor || spendEditor) return;
+      const active = document.activeElement;
+      const tag = active?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
+      e.preventDefault();
+      openAdd();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tab, selectedDate, editor, spendEditor]);
 
   const handleSave = (values) => {
     if (editor.task) updateTask(editor.task.id, values);

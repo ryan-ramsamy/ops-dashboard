@@ -185,9 +185,11 @@ export function downloadBackup(tasks, personalSpend) {
   URL.revokeObjectURL(a.href);
 }
 
-// Reads a backup file. Returns { tasks, personalSpend, count } or throws
-// with a friendly message. `count` covers both lists combined so the
-// import confirmation can show one number.
+// Reads a backup file. Returns { tasks, personalSpend, count, skipped }
+// or throws with a friendly message. `count` covers both lists combined
+// so the import confirmation can show one number; `skipped` is how many
+// entries failed validation (empty title, non-positive amount, etc.)
+// and were silently dropped, so the confirmation can surface that too.
 export function parseBackupFile(text) {
   let data;
   try {
@@ -197,12 +199,15 @@ export function parseBackupFile(text) {
   }
   const taskList = Array.isArray(data) ? data : data.tasks;
   const spendList = Array.isArray(data) ? [] : data.personalSpend;
+  const rawTaskCount = Array.isArray(taskList) ? taskList.length : 0;
+  const rawSpendCount = Array.isArray(spendList) ? spendList.length : 0;
   const tasks = Array.isArray(taskList) ? taskList.map(normalizeTask).filter(Boolean) : [];
   const personalSpend = Array.isArray(spendList) ? spendList.map(normalizeSpend).filter(Boolean) : [];
   if (!tasks.length && !personalSpend.length) {
     throw new Error('That file does not look like an ops-dashboard backup.');
   }
-  return { tasks, personalSpend, count: tasks.length + personalSpend.length };
+  const skipped = rawTaskCount - tasks.length + (rawSpendCount - personalSpend.length);
+  return { tasks, personalSpend, count: tasks.length + personalSpend.length, skipped };
 }
 
 // Merge imported items with current ones by id — imported wins on a
@@ -222,3 +227,17 @@ export const formatRand = (n) => {
   const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return `R ${withCommas}.${frac}`;
 };
+
+// Parses a currency amount typed by hand, accepting a comma as the
+// decimal separator (common in South African / European input) in
+// addition to the standard dot. "12,50" -> 12.5; "1,234.56" is treated
+// as thousands-separated ("," stripped) since it already has a dot.
+export function parseAmount(input) {
+  if (typeof input !== 'string') return NaN;
+  const s = input.trim();
+  if (!s) return NaN;
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  const normalized = hasComma && hasDot ? s.replace(/,/g, '') : hasComma ? s.replace(',', '.') : s;
+  return parseFloat(normalized);
+}

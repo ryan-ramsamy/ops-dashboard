@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import TaskRow from './TaskRow.jsx';
 
-// iOS-Mail-style swipe: drag left reveals a fixed-width red delete
-// action; releasing past OPEN_THRESHOLD snaps it open (tap to delete),
-// releasing past DELETE_THRESHOLD deletes immediately. Touch-only —
-// desktop has no touchstart/move/end events, so its click-to-edit
+// iOS-Mail-style bidirectional swipe: drag left reveals a fixed-width
+// red delete action, drag right reveals a green complete action.
+// Releasing past OPEN_THRESHOLD snaps open (tap the revealed action to
+// commit), releasing past COMMIT_THRESHOLD commits immediately. Touch
+// only — desktop has no touchstart/move/end events, so its click-to-edit
 // (and the editor's own Delete button) is completely unaffected.
 const ACTION_WIDTH = 76;
 const OPEN_THRESHOLD = 40;
-const DELETE_THRESHOLD = 140;
+const COMMIT_THRESHOLD = 140;
 
 export default function SwipeableTaskRow({
   task,
@@ -16,7 +17,7 @@ export default function SwipeableTaskRow({
   onEdit,
   onDeleteRequest,
   showDate,
-  isOpen,
+  openDir, // -1 (delete revealed), 0 (closed), 1 (complete revealed)
   onOpenChange,
 }) {
   const [dragX, setDragX] = useState(0);
@@ -25,8 +26,8 @@ export default function SwipeableTaskRow({
   const rawDeltaRef = useRef(0);
 
   useEffect(() => {
-    if (!isOpen) setDragX(0);
-  }, [isOpen]);
+    setDragX(openDir ? openDir * ACTION_WIDTH : 0);
+  }, [openDir]);
 
   const onTouchStart = (e) => {
     startXRef.current = e.touches[0].clientX;
@@ -37,25 +38,32 @@ export default function SwipeableTaskRow({
   const onTouchMove = (e) => {
     if (startXRef.current == null) return;
     const delta = e.touches[0].clientX - startXRef.current;
-    const base = isOpen ? -ACTION_WIDTH : 0;
+    const base = openDir ? openDir * ACTION_WIDTH : 0;
     rawDeltaRef.current = base + delta;
-    setDragX(Math.min(0, Math.max(base + delta, -ACTION_WIDTH)));
+    setDragX(Math.min(ACTION_WIDTH, Math.max(base + delta, -ACTION_WIDTH)));
   };
 
   const onTouchEnd = () => {
     setDragging(false);
     startXRef.current = null;
     const raw = rawDeltaRef.current;
-    if (raw <= -DELETE_THRESHOLD) {
+    if (raw <= -COMMIT_THRESHOLD) {
       onDeleteRequest(task);
       setDragX(0);
-      onOpenChange(false);
+      onOpenChange(0);
+    } else if (raw >= COMMIT_THRESHOLD) {
+      onToggle(task.id);
+      setDragX(0);
+      onOpenChange(0);
     } else if (raw <= -OPEN_THRESHOLD) {
       setDragX(-ACTION_WIDTH);
-      onOpenChange(true);
+      onOpenChange(-1);
+    } else if (raw >= OPEN_THRESHOLD) {
+      setDragX(ACTION_WIDTH);
+      onOpenChange(1);
     } else {
       setDragX(0);
-      onOpenChange(false);
+      onOpenChange(0);
     }
   };
 
@@ -64,19 +72,32 @@ export default function SwipeableTaskRow({
       e.stopPropagation();
       e.preventDefault();
       setDragX(0);
-      onOpenChange(false);
+      onOpenChange(0);
     }
   };
 
   return (
     <div className="swipe-row">
       <button
+        className="swipe-complete-action"
+        aria-label={`Mark ${task.title} as done`}
+        onClick={() => {
+          onToggle(task.id);
+          setDragX(0);
+          onOpenChange(0);
+        }}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4.5 12.5l5 5L20 6.5" />
+        </svg>
+      </button>
+      <button
         className="swipe-delete-action"
         aria-label={`Delete ${task.title}`}
         onClick={() => {
           onDeleteRequest(task);
           setDragX(0);
-          onOpenChange(false);
+          onOpenChange(0);
         }}
       >
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

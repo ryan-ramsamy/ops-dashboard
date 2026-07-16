@@ -50,6 +50,27 @@ Gotchas learned the hard way:
   collapsed "Done" group, aren't just hidden — the row isn't rendered until
   expanded. `getByText(...).waitFor()` on a done task will time out unless
   you click the "Done (N)" toggle first.
+- The Done toggle's expanded/collapsed state is real component state that
+  persists across renders even when the section briefly has zero tasks
+  (DoneGroup returns `null` for its *output* but the same instance stays
+  mounted, so its `useState` survives) — don't blindly click "Done (N)" to
+  "open" it a second time, or you'll collapse it instead. Check
+  `getAttribute('aria-expanded')` first.
+- Swipe is bidirectional (SwipeableTaskRow): swipe left reveals
+  `.swipe-delete-action` (right edge), swipe right reveals
+  `.swipe-complete-action` (left edge, calls the same `onToggle` as the
+  checkbox). Same touch-dispatch-on-`.swipe-content` approach works for
+  positive `dx` too.
+- Tab-switching unmounts the view: `App.jsx` renders `{tab === 'tasks' &&
+  <TasksView/>}` etc., so navigating away and back resets all of
+  TasksView's local state (filter, Done-expanded, undo toast). An imported
+  *undated* task won't appear while parked on the Calendar tab — switch to
+  Tasks first before asserting on it.
+- Tap-target checks: `.icon-btn`/`.check` expand their hit area via an
+  invisible `::before` (CSS `inset`), not by resizing the visible box.
+  Verify by clicking a few px *outside* the element's `boundingBox()` with
+  `page.mouse.click()` and confirming the handler still fires — pseudo-
+  elements have no ElementHandle of their own to measure directly.
 
 ## Flows worth driving
 

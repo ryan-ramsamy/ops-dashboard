@@ -1,26 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATEGORIES, sentenceCase } from '../store.js';
 import { localToday } from '../dates.js';
+import { byPriority, byDateThenPriority } from '../sorting.js';
 import SwipeableTaskRow from './SwipeableTaskRow.jsx';
 
 const UNDO_MS = 3500;
-const PRIORITY_RANK = { high: 0, med: 1, low: 2 };
 
-// Open tasks first, then by priority, then title.
-function byPriority(a, b) {
-  if (a.done !== b.done) return a.done ? 1 : -1;
-  if (PRIORITY_RANK[a.priority] !== PRIORITY_RANK[b.priority]) {
-    return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-  }
-  return a.title.localeCompare(b.title);
-}
-
-function byDateThenPriority(a, b) {
-  if (a.dueDate !== b.dueDate) return a.dueDate < b.dueDate ? -1 : 1;
-  return byPriority(a, b);
-}
-
-function Group({ label, tasks, onToggle, onEdit, onDeleteRequest, showDate, openSwipeId, setOpenSwipeId }) {
+function Group({ label, tasks, onToggle, onEdit, onDeleteRequest, showDate, openSwipe, setOpenSwipe }) {
   if (!tasks.length) return null;
   return (
     <section className="group">
@@ -34,8 +20,8 @@ function Group({ label, tasks, onToggle, onEdit, onDeleteRequest, showDate, open
             onEdit={onEdit}
             onDeleteRequest={onDeleteRequest}
             showDate={showDate}
-            isOpen={openSwipeId === t.id}
-            onOpenChange={(open) => setOpenSwipeId(open ? t.id : null)}
+            openDir={openSwipe?.id === t.id ? openSwipe.dir : 0}
+            onOpenChange={(dir) => setOpenSwipe(dir ? { id: t.id, dir } : null)}
           />
         ))}
       </div>
@@ -43,7 +29,7 @@ function Group({ label, tasks, onToggle, onEdit, onDeleteRequest, showDate, open
   );
 }
 
-function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipeId, setOpenSwipeId }) {
+function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipe, setOpenSwipe }) {
   const [expanded, setExpanded] = useState(false);
   if (!tasks.length) return null;
   return (
@@ -67,8 +53,8 @@ function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipeId, setO
               onToggle={onToggle}
               onEdit={onEdit}
               onDeleteRequest={onDeleteRequest}
-              isOpen={openSwipeId === t.id}
-              onOpenChange={(open) => setOpenSwipeId(open ? t.id : null)}
+              openDir={openSwipe?.id === t.id ? openSwipe.dir : 0}
+              onOpenChange={(dir) => setOpenSwipe(dir ? { id: t.id, dir } : null)}
             />
           ))}
         </div>
@@ -79,7 +65,7 @@ function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipeId, setO
 
 export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
   const [filter, setFilter] = useState('all');
-  const [openSwipeId, setOpenSwipeId] = useState(null);
+  const [openSwipe, setOpenSwipe] = useState(null); // { id, dir: -1 | 1 } | null
   const [hiddenIds, setHiddenIds] = useState(() => new Set());
   const [toast, setToast] = useState(null); // { id, title } | null
   const timeoutRef = useRef(null);
@@ -140,11 +126,12 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
 
   return (
     <div className="tasks-view">
-      <div className="chips" role="tablist">
+      <div className="chips">
         {['all', ...CATEGORIES].map((c) => (
           <button
             key={c}
             className={`chip ${filter === c ? 'selected' : ''}`}
+            aria-pressed={filter === c}
             onClick={() => setFilter(c)}
           >
             {c === 'all' ? 'All' : sentenceCase(c)}
@@ -171,8 +158,8 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
             onToggle={onToggle}
             onEdit={onEdit}
             onDeleteRequest={requestDelete}
-            openSwipeId={openSwipeId}
-            setOpenSwipeId={setOpenSwipeId}
+            openSwipe={openSwipe}
+            setOpenSwipe={setOpenSwipe}
           />
           <Group
             label="Upcoming"
@@ -181,8 +168,8 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
             onEdit={onEdit}
             onDeleteRequest={requestDelete}
             showDate
-            openSwipeId={openSwipeId}
-            setOpenSwipeId={setOpenSwipeId}
+            openSwipe={openSwipe}
+            setOpenSwipe={setOpenSwipe}
           />
           <Group
             label="Someday"
@@ -190,8 +177,8 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
             onToggle={onToggle}
             onEdit={onEdit}
             onDeleteRequest={requestDelete}
-            openSwipeId={openSwipeId}
-            setOpenSwipeId={setOpenSwipeId}
+            openSwipe={openSwipe}
+            setOpenSwipe={setOpenSwipe}
           />
         </>
       )}
@@ -201,12 +188,12 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
         onToggle={onToggle}
         onEdit={onEdit}
         onDeleteRequest={requestDelete}
-        openSwipeId={openSwipeId}
-        setOpenSwipeId={setOpenSwipeId}
+        openSwipe={openSwipe}
+        setOpenSwipe={setOpenSwipe}
       />
 
       {toast && (
-        <div className="undo-toast">
+        <div className="undo-toast" role="status" aria-live="polite">
           <span className="undo-toast-text">Deleted “{toast.title}”</span>
           <button className="undo-toast-action" onClick={undoDelete}>
             Undo

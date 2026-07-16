@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PROPERTIES, formatRand } from '../store.js';
 import { localToday, addMonths, monthKeyOf, formatMonthYear, formatDayShort } from '../dates.js';
+import MonthNav from './MonthNav.jsx';
 
 // Month a maintenance cost belongs to: the task's due date, else when it
 // was completed, else when it was created.
@@ -43,19 +44,14 @@ export default function SpendView({ tasks, personalSpend, onAddPersonal, onEditP
 
   return (
     <div className="spend-view">
-      <div className="cal-nav standalone">
-        <button className="icon-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14.5 6l-6 6 6 6" />
-          </svg>
-        </button>
-        <span className="cal-label">{formatMonthYear(month)}</span>
-        <button className="icon-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9.5 6l6 6-6 6" />
-          </svg>
-        </button>
-      </div>
+      <MonthNav
+        label={formatMonthYear(month)}
+        onPrev={() => setMonth(addMonths(month, -1))}
+        onNext={() => setMonth(addMonths(month, 1))}
+        prevLabel="Previous month"
+        nextLabel="Next month"
+        standalone
+      />
 
       <div className="card spend-card">
         <div className="spend-total">

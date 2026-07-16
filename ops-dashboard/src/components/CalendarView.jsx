@@ -10,9 +10,10 @@ import {
   formatDayShort,
   formatDayLong,
 } from '../dates.js';
+import { byPriority } from '../sorting.js';
 import TaskRow from './TaskRow.jsx';
+import MonthNav from './MonthNav.jsx';
 
-const PRIORITY_RANK = { high: 0, med: 1, low: 2 };
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function CalendarView({ tasks, selected, onSelect, onToggle, onEdit }) {
@@ -47,12 +48,7 @@ export default function CalendarView({ tasks, selected, onSelect, onToggle, onEd
       ? formatMonthYear(monthKeyOf(anchor))
       : `${formatDayShort(weekDays[0])} – ${formatDayShort(weekDays[6])}`;
 
-  const dayTasks = tasks
-    .filter((t) => t.dueDate === selected)
-    .sort((a, b) => {
-      if (a.done !== b.done) return a.done ? 1 : -1;
-      return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-    });
+  const dayTasks = tasks.filter((t) => t.dueDate === selected).sort(byPriority);
 
   const dayCell = (date, inMonth = true) => (
     <button
@@ -98,19 +94,7 @@ export default function CalendarView({ tasks, selected, onSelect, onToggle, onEd
       </div>
 
       <div className="card cal-card">
-        <div className="cal-nav">
-          <button className="icon-btn" aria-label="Previous" onClick={() => move(-1)}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14.5 6l-6 6 6 6" />
-            </svg>
-          </button>
-          <span className="cal-label">{label}</span>
-          <button className="icon-btn" aria-label="Next" onClick={() => move(1)}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9.5 6l6 6-6 6" />
-            </svg>
-          </button>
-        </div>
+        <MonthNav label={label} onPrev={() => move(-1)} onNext={() => move(1)} />
 
         <div className="cal-weekdays">
           {WEEKDAYS.map((d) => (

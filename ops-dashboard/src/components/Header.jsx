@@ -22,8 +22,9 @@ export default function Header({ tasks, personalSpend, onAdd, onImport }) {
     try {
       const parsed = parseBackupFile(await file.text());
       const currentCount = tasks.length + personalSpend.length;
+      const skippedNote = parsed.skipped > 0 ? `, ${parsed.skipped} skipped as invalid` : '';
       const ok = window.confirm(
-        `Import ${parsed.count} item${parsed.count === 1 ? '' : 's'}? They will be merged into your current ${currentCount}.`
+        `Import ${parsed.count} item${parsed.count === 1 ? '' : 's'}${skippedNote}? They will be merged into your current ${currentCount}.`
       );
       if (ok) onImport(parsed);
     } catch (err) {

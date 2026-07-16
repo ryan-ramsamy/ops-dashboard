@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SPEND_CATEGORIES } from '../store.js';
+import { SPEND_CATEGORIES, parseAmount } from '../store.js';
 import { localToday } from '../dates.js';
 
 export default function SpendEditor({ entry, onSave, onDelete, onClose }) {
@@ -10,7 +10,7 @@ export default function SpendEditor({ entry, onSave, onDelete, onClose }) {
   const [category, setCategory] = useState(base.category || '');
   const [date, setDate] = useState(base.date);
 
-  const parsedAmount = parseFloat(amount);
+  const parsedAmount = parseAmount(amount);
   const canSave = description.trim() && Number.isFinite(parsedAmount) && parsedAmount > 0;
 
   const save = (e) => {

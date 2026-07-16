@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CATEGORIES, PROPERTIES, PRIORITIES, sentenceCase } from '../store.js';
+import { CATEGORIES, PROPERTIES, PRIORITIES, sentenceCase, parseAmount } from '../store.js';
 import { localToday } from '../dates.js';
 
 function ChipRow({ options, value, onChange, labels }) {
@@ -43,7 +43,7 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
-    const parsedCost = parseFloat(cost);
+    const parsedCost = parseAmount(cost);
     onSave({
       title: trimmed,
       category,
