@@ -328,7 +328,7 @@ button {
 .undo-toast {
   position: fixed;
   left: 16px;
-  right: 16px;
+  right: 84px; /* clears the FAB, which sits at the same bottom-right corner */
   bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 12px);
   max-width: 648px;
   margin: 0 auto;
@@ -453,11 +453,18 @@ button {
 /* ---------- empty states ---------- */
 
 .empty {
+  display: block;
+  width: 100%;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   padding: 28px 16px;
   text-align: center;
   color: var(--ink-secondary);
+}
+
+.empty-tappable:hover {
+  background: var(--bg-subtle);
+  border-color: var(--ink-faint);
 }
 
 .empty p {
@@ -813,4 +820,37 @@ button {
 
 .btn-danger:hover {
   background: var(--red-bg);
+}
+
+/* ---------- floating action button ---------- */
+
+.fab-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 16px);
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 21;
+}
+
+.fab {
+  pointer-events: auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(15, 15, 15, 0.22);
+}
+
+.fab:hover {
+  background: #26251f;
 }

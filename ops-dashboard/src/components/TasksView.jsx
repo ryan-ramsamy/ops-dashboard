@@ -63,7 +63,7 @@ function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipe, setOpe
   );
 }
 
-export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
+export default function TasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) {
   const [filter, setFilter] = useState('all');
   const [openSwipe, setOpenSwipe] = useState(null); // { id, dir: -1 | 1 } | null
   const [hiddenIds, setHiddenIds] = useState(() => new Set());
@@ -140,17 +140,17 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
       </div>
 
       {empty && !doneTasks.length ? (
-        <div className="empty">
+        <button className="empty empty-tappable" onClick={onAdd}>
           <p>No tasks{filter === 'all' ? ' yet' : ' in this category'}.</p>
           <p className="empty-hint">Tap + to add one.</p>
-        </div>
+        </button>
       ) : (
         <>
           {empty && (
-            <div className="empty">
+            <button className="empty empty-tappable" onClick={onAdd}>
               <p>No open tasks{filter === 'all' ? '' : ' in this category'}.</p>
               <p className="empty-hint">Tap + to add one.</p>
-            </div>
+            </button>
           )}
           <Group
             label="Due today"
@@ -200,6 +200,14 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete }) {
           </button>
         </div>
       )}
+
+      <div className="fab-wrap">
+        <button className="fab" aria-label="Add task" onClick={onAdd}>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

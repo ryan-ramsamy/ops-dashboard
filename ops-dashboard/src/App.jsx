@@ -82,7 +82,13 @@ export default function App() {
       <Header tasks={tasks} personalSpend={personalSpend} onImport={handleImport} onAdd={openAdd} />
       <main className="content">
         {tab === 'tasks' && (
-          <TasksView tasks={tasks} onToggle={toggleDone} onEdit={openEdit} onDelete={deleteTask} />
+          <TasksView
+            tasks={tasks}
+            onToggle={toggleDone}
+            onEdit={openEdit}
+            onDelete={deleteTask}
+            onAdd={openAdd}
+          />
         )}
         {tab === 'calendar' && (
           <CalendarView
