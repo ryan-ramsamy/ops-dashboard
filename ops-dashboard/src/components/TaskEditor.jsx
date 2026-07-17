@@ -29,7 +29,21 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
     assignee: null,
     cost: null,
     notes: null,
+    recurrence: null,
   };
+
+  // Map a stored recurrence rule back onto the Repeat chips. Custom is
+  // always day-based in this UI; week rules with interval > 1 (possible
+  // via hand-edited backups) render as custom day counts.
+  const rec = base.recurrence;
+  const initialRepeat = !rec
+    ? 'none'
+    : rec.unit === 'month'
+      ? 'monthly'
+      : rec.unit === 'week' && rec.interval === 1
+        ? 'weekly'
+        : 'custom';
+  const initialCustomDays = !rec || rec.unit === 'month' ? 7 : rec.unit === 'week' ? rec.interval * 7 : rec.interval;
 
   const [title, setTitle] = useState(base.title);
   const [category, setCategory] = useState(base.category);
@@ -40,6 +54,8 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
   const [assignee, setAssignee] = useState(base.assignee || '');
   const [cost, setCost] = useState(base.cost != null ? String(base.cost) : '');
   const [notes, setNotes] = useState(base.notes || '');
+  const [repeat, setRepeat] = useState(initialRepeat);
+  const [customDays, setCustomDays] = useState(String(initialCustomDays));
   // Collapsed by default in quick-add so it doesn't slow down fast entry —
   // but stays expanded when editing a task that already has notes.
   const [showNotes, setShowNotes] = useState(!!base.notes);
@@ -49,18 +65,31 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
     const trimmed = title.trim();
     if (!trimmed) return;
     const parsedCost = parseAmount(cost);
+    const newDueDate = someday ? null : dueDate;
+    const recurrence =
+      someday || repeat === 'none'
+        ? null
+        : repeat === 'weekly'
+          ? { unit: 'week', interval: 1 }
+          : repeat === 'monthly'
+            ? { unit: 'month', interval: 1 }
+            : { unit: 'day', interval: Math.max(1, parseInt(customDays, 10) || 7) };
     onSave({
       title: trimmed,
       category,
       property,
       priority,
-      dueDate: someday ? null : dueDate,
+      dueDate: newDueDate,
       assignee: assignee.trim() || null,
       cost:
         category === 'maintenance' && Number.isFinite(parsedCost) && parsedCost > 0
           ? parsedCost
           : null,
       notes: notes.trim() || null,
+      recurrence,
+      // A deliberate date change means the task is no longer "overdue
+      // from" anywhere — clear the rollover marker.
+      ...(task && newDueDate !== task.dueDate ? { originalDueDate: null } : {}),
     });
   };
 
@@ -123,6 +152,26 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
             />
           )}
         </div>
+
+        {!someday && (
+          <>
+            <label className="field-label">Repeat</label>
+            <ChipRow options={['none', 'weekly', 'monthly', 'custom']} value={repeat} onChange={setRepeat} />
+            {repeat === 'custom' && (
+              <div className="custom-repeat">
+                <span>Every</span>
+                <input
+                  className="input custom-days"
+                  inputMode="numeric"
+                  value={customDays}
+                  onChange={(e) => setCustomDays(e.target.value)}
+                  aria-label="Repeat every this many days"
+                />
+                <span>days</span>
+              </div>
+            )}
+          </>
+        )}
 
         <label className="field-label">Assignee (optional)</label>
         <input

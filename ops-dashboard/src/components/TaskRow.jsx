@@ -1,5 +1,5 @@
 import { sentenceCase, formatRand } from '../store.js';
-import { formatDayShort } from '../dates.js';
+import { formatDayShort, daysBetween } from '../dates.js';
 
 export default function TaskRow({ task, onToggle, onEdit, showDate = false }) {
   const sub = [
@@ -9,6 +9,13 @@ export default function TaskRow({ task, onToggle, onEdit, showDate = false }) {
   ]
     .filter(Boolean)
     .join(' · ');
+
+  // Rollover moved this task here from an earlier date — surface how
+  // late it is instead of letting it blend in with today's tasks.
+  const overdueDays =
+    !task.done && task.originalDueDate && task.dueDate && task.originalDueDate < task.dueDate
+      ? daysBetween(task.originalDueDate, task.dueDate)
+      : 0;
 
   return (
     <div className={`task-row ${task.done ? 'is-done' : ''}`}>
@@ -28,6 +35,16 @@ export default function TaskRow({ task, onToggle, onEdit, showDate = false }) {
         {sub && <span className="task-sub">{sub}</span>}
       </button>
       <div className="task-meta">
+        {task.recurrence && (
+          <span className="note-indicator" role="img" aria-label="Repeats" title="Repeats">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 2.5l4 4-4 4" />
+              <path d="M3 11.5v-1a4 4 0 014-4h14" />
+              <path d="M7 21.5l-4-4 4-4" />
+              <path d="M21 13.5v1a4 4 0 01-4 4H3" />
+            </svg>
+          </span>
+        )}
         {task.notes && (
           <span className="note-indicator" role="img" aria-label="Has notes" title="Has notes">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -35,6 +52,9 @@ export default function TaskRow({ task, onToggle, onEdit, showDate = false }) {
               <path d="M9 12h6M9 15.5h6" />
             </svg>
           </span>
+        )}
+        {overdueDays > 0 && (
+          <span className="badge badge-overdue">{overdueDays}d overdue</span>
         )}
         {showDate && task.dueDate && (
           <span className="task-date">{formatDayShort(task.dueDate)}</span>

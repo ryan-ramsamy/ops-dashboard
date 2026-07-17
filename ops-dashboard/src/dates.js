@@ -21,6 +21,30 @@ export function addDays(s, n) {
   return toDateStr(d);
 }
 
+export function daysBetween(a, b) {
+  return Math.round((parseDate(b) - parseDate(a)) / 86400000);
+}
+
+// Advances a date by a recurrence rule ({ unit: 'day'|'week'|'month',
+// interval: n }). Month steps clamp to the last day of a shorter month
+// (Jan 31 + 1 month = Feb 28), matching how people expect "monthly" to
+// behave for end-of-month tasks.
+export function addInterval(dateStr, rule) {
+  const d = parseDate(dateStr);
+  if (rule.unit === 'day') {
+    d.setDate(d.getDate() + rule.interval);
+  } else if (rule.unit === 'week') {
+    d.setDate(d.getDate() + 7 * rule.interval);
+  } else {
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + rule.interval);
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, last));
+  }
+  return toDateStr(d);
+}
+
 export function monthKeyOf(dateStr) {
   return dateStr.slice(0, 7);
 }

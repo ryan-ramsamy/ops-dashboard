@@ -72,6 +72,16 @@ Gotchas learned the hard way:
   `page.mouse.click()` and confirming the handler still fires — pseudo-
   elements have no ElementHandle of their own to measure directly.
 
+- Recurring tasks: completing one spawns the next occurrence (same
+  title/details, dueDate advanced by the rule) — assert on the Upcoming
+  group, and use the same-title/same-date guard when testing the
+  un-complete → re-complete path (it must not duplicate).
+- Overdue: rollover sets `originalDueDate`; import a backup with a past
+  `dueDate` to trigger it deterministically. The "Nd overdue" badge only
+  renders when `originalDueDate < dueDate` and the task is open.
+- Search: opening it hides the chips row entirely — assert chips after
+  Close, not during. Search ignores category/assignee filters by design.
+
 ## Flows worth driving
 
 - Add tasks across all three groups (today / future date / someday) and check

@@ -455,6 +455,46 @@ button {
   color: var(--gray-ink);
 }
 
+.badge-overdue {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+
+/* ---------- filter bar, assignee chips & search ---------- */
+
+.filter-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.filter-bar .chips {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.filter-bar .icon-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+.assignee-chips {
+  margin-top: -12px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+}
+
 /* ---------- empty states ---------- */
 
 .empty {
@@ -783,6 +823,20 @@ button {
 .notes-toggle:hover {
   color: var(--ink);
   text-decoration: underline;
+}
+
+.custom-repeat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13.5px;
+  color: var(--ink-secondary);
+}
+
+.custom-days {
+  width: 64px;
+  text-align: center;
 }
 
 .due-row {

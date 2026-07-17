@@ -65,11 +65,20 @@ function DoneGroup({ tasks, onToggle, onEdit, onDeleteRequest, openSwipe, setOpe
 
 export default function TasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) {
   const [filter, setFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [openSwipe, setOpenSwipe] = useState(null); // { id, dir: -1 | 1 } | null
   const [hiddenIds, setHiddenIds] = useState(() => new Set());
   const [toast, setToast] = useState(null); // { id, title } | null
   const timeoutRef = useRef(null);
   const today = localToday();
+
+  // Assignee chips reflect whoever actually appears in the data — no
+  // hardcoded people list. Falls back to 'all' if the filtered person's
+  // last task is deleted.
+  const assignees = [...new Set(tasks.map((t) => t.assignee).filter(Boolean))].sort();
+  const activeAssignee = assignees.includes(assigneeFilter) ? assigneeFilter : 'all';
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
@@ -107,7 +116,20 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) 
   };
 
   const notHidden = tasks.filter((t) => !hiddenIds.has(t.id));
-  const filtered = filter === 'all' ? notHidden : notHidden.filter((t) => t.category === filter);
+
+  // Search cuts across every category/assignee/section (title + notes);
+  // the chip filters only apply when not searching.
+  const q = query.trim().toLowerCase();
+  const searching = searchOpen && q !== '';
+  let filtered;
+  if (searching) {
+    filtered = notHidden.filter(
+      (t) => t.title.toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q)
+    );
+  } else {
+    filtered = filter === 'all' ? notHidden : notHidden.filter((t) => t.category === filter);
+    if (activeAssignee !== 'all') filtered = filtered.filter((t) => t.assignee === activeAssignee);
+  }
 
   // Completed tasks stay eligible (for the "Done" section) for the rest
   // of the day, then drop off the list entirely. They remain in the
@@ -126,27 +148,81 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) 
 
   return (
     <div className="tasks-view">
-      <div className="chips">
-        {['all', ...CATEGORIES].map((c) => (
+      {searchOpen ? (
+        <div className="search-bar">
+          <input
+            className="input search-input"
+            autoFocus
+            placeholder="Search title and notes…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           <button
-            key={c}
-            className={`chip ${filter === c ? 'selected' : ''}`}
-            aria-pressed={filter === c}
-            onClick={() => setFilter(c)}
+            className="icon-btn"
+            aria-label="Close search"
+            onClick={() => {
+              setSearchOpen(false);
+              setQuery('');
+            }}
           >
-            {c === 'all' ? 'All' : sentenceCase(c)}
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
-        ))}
-      </div>
-
-      {empty && !doneTasks.length ? (
-        <button className="empty empty-tappable" onClick={onAdd}>
-          <p>No tasks{filter === 'all' ? ' yet' : ' in this category'}.</p>
-          <p className="empty-hint">Tap + to add one.</p>
-        </button>
+        </div>
       ) : (
         <>
-          {empty && (
+          <div className="filter-bar">
+            <div className="chips">
+              {['all', ...CATEGORIES].map((c) => (
+                <button
+                  key={c}
+                  className={`chip ${filter === c ? 'selected' : ''}`}
+                  aria-pressed={filter === c}
+                  onClick={() => setFilter(c)}
+                >
+                  {c === 'all' ? 'All' : sentenceCase(c)}
+                </button>
+              ))}
+            </div>
+            <button className="icon-btn" aria-label="Search tasks" onClick={() => setSearchOpen(true)}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M16.5 16.5L21 21" />
+              </svg>
+            </button>
+          </div>
+          {assignees.length > 0 && (
+            <div className="chips assignee-chips">
+              {['all', ...assignees].map((a) => (
+                <button
+                  key={a}
+                  className={`chip ${activeAssignee === a ? 'selected' : ''}`}
+                  aria-pressed={activeAssignee === a}
+                  onClick={() => setAssigneeFilter(a)}
+                >
+                  {a === 'all' ? 'Anyone' : a}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {empty && !doneTasks.length ? (
+        searching ? (
+          <div className="empty">
+            <p>No tasks match “{query.trim()}”.</p>
+          </div>
+        ) : (
+          <button className="empty empty-tappable" onClick={onAdd}>
+            <p>No tasks{filter === 'all' ? ' yet' : ' in this category'}.</p>
+            <p className="empty-hint">Tap + to add one.</p>
+          </button>
+        )
+      ) : (
+        <>
+          {empty && !searching && (
             <button className="empty empty-tappable" onClick={onAdd}>
               <p>No open tasks{filter === 'all' ? '' : ' in this category'}.</p>
               <p className="empty-hint">Tap + to add one.</p>

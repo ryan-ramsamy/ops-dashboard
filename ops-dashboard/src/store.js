@@ -33,11 +33,24 @@ export function newTask(data) {
     assignee: null,
     cost: null, // rand amount; only meaningful on maintenance tasks
     notes: null,
+    recurrence: null, // { unit: 'day'|'week'|'month', interval: n } or null
+    originalDueDate: null, // set by rollover so overdue tasks stay flagged
     done: false,
     createdAt: localToday(),
     completedAt: null,
     ...data,
   };
+}
+
+const RECUR_UNITS = ['day', 'week', 'month'];
+
+function normalizeRecurrence(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const interval = Number(raw.interval);
+  if (!RECUR_UNITS.includes(raw.unit) || !Number.isInteger(interval) || interval < 1 || interval > 365) {
+    return null;
+  }
+  return { unit: raw.unit, interval };
 }
 
 // Coerce anything (old versions, hand-edited backups) into a valid task.
@@ -57,6 +70,8 @@ export function normalizeTask(raw) {
     assignee: typeof raw.assignee === 'string' && raw.assignee.trim() ? raw.assignee.trim() : null,
     cost: Number.isFinite(cost) && cost > 0 ? cost : null,
     notes: typeof raw.notes === 'string' && raw.notes.trim() ? raw.notes.trim() : null,
+    recurrence: normalizeRecurrence(raw.recurrence),
+    originalDueDate: dateRe.test(raw.originalDueDate) ? raw.originalDueDate.slice(0, 10) : null,
     done: !!raw.done,
     createdAt: dateRe.test(raw.createdAt) ? raw.createdAt : localToday(),
     completedAt: dateRe.test(raw.completedAt) ? raw.completedAt.slice(0, 10) : null,
@@ -157,12 +172,14 @@ export function savePersonalSpend(entries) {
 
 // Tweek-style rollover: an unfinished dated task whose date has passed
 // moves to today. Returns the same array reference when nothing changed.
+// The first rollover records the task's original due date so the UI can
+// flag it as overdue — later rollovers keep that earliest date.
 export function rolloverTasks(tasks, today = localToday()) {
   let changed = false;
   const next = tasks.map((t) => {
     if (!t.done && t.dueDate && t.dueDate < today) {
       changed = true;
-      return { ...t, dueDate: today };
+      return { ...t, dueDate: today, originalDueDate: t.originalDueDate || t.dueDate };
     }
     return t;
   });
