@@ -28,6 +28,16 @@ const TABS = [
       </svg>
     ),
   },
+  {
+    id: 'summary',
+    label: 'Summary',
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="4" width="14" height="17" rx="2" />
+        <path d="M9 3.5h6M8.5 10h7M8.5 13.5h7M8.5 17h4" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Tabs({ tab, onChange }) {

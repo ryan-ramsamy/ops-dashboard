@@ -35,6 +35,7 @@ export function newTask(data) {
     notes: null,
     recurrence: null, // { unit: 'day'|'week'|'month', interval: n } or null
     originalDueDate: null, // set by rollover so overdue tasks stay flagged
+    inbox: false, // true = quick-captured, not yet triaged into a section
     done: false,
     createdAt: localToday(),
     completedAt: null,
@@ -72,6 +73,7 @@ export function normalizeTask(raw) {
     notes: typeof raw.notes === 'string' && raw.notes.trim() ? raw.notes.trim() : null,
     recurrence: normalizeRecurrence(raw.recurrence),
     originalDueDate: dateRe.test(raw.originalDueDate) ? raw.originalDueDate.slice(0, 10) : null,
+    inbox: !!raw.inbox,
     done: !!raw.done,
     createdAt: dateRe.test(raw.createdAt) ? raw.createdAt : localToday(),
     completedAt: dateRe.test(raw.completedAt) ? raw.completedAt.slice(0, 10) : null,

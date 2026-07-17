@@ -115,7 +115,9 @@ export default function TasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) 
     setToast(null);
   };
 
-  const notHidden = tasks.filter((t) => !hiddenIds.has(t.id));
+  // Inbox items aren't triaged into a section yet, so they stay out of
+  // every Tasks view list until sorted from the Inbox.
+  const notHidden = tasks.filter((t) => !hiddenIds.has(t.id) && !t.inbox);
 
   // Search cuts across every category/assignee/section (title + notes);
   // the chip filters only apply when not searching.

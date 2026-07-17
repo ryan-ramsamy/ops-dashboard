@@ -87,6 +87,9 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
           : null,
       notes: notes.trim() || null,
       recurrence,
+      // Saving through the full editor is how an Inbox item gets triaged —
+      // clear the flag unconditionally (a no-op for already-sorted tasks).
+      inbox: false,
       // A deliberate date change means the task is no longer "overdue
       // from" anywhere — clear the rollover marker.
       ...(task && newDueDate !== task.dueDate ? { originalDueDate: null } : {}),
