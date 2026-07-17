@@ -427,6 +427,11 @@ button {
   white-space: nowrap;
 }
 
+.note-indicator {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
 .badge {
   font-size: 11px;
   font-weight: 500;
@@ -761,6 +766,23 @@ button {
 
 .input::placeholder {
   color: var(--ink-faint);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}
+
+.notes-toggle {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+
+.notes-toggle:hover {
+  color: var(--ink);
+  text-decoration: underline;
 }
 
 .due-row {

@@ -28,6 +28,14 @@ export default function TaskRow({ task, onToggle, onEdit, showDate = false }) {
         {sub && <span className="task-sub">{sub}</span>}
       </button>
       <div className="task-meta">
+        {task.notes && (
+          <span className="note-indicator" role="img" aria-label="Has notes" title="Has notes">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 3.5h9l4.5 4.5V20a1 1 0 01-1 1H6a1 1 0 01-1-1V4.5a1 1 0 011-1z" />
+              <path d="M9 12h6M9 15.5h6" />
+            </svg>
+          </span>
+        )}
         {showDate && task.dueDate && (
           <span className="task-date">{formatDayShort(task.dueDate)}</span>
         )}

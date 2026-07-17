@@ -32,6 +32,7 @@ export function newTask(data) {
     dueDate: null, // 'YYYY-MM-DD' or null = someday
     assignee: null,
     cost: null, // rand amount; only meaningful on maintenance tasks
+    notes: null,
     done: false,
     createdAt: localToday(),
     completedAt: null,
@@ -55,6 +56,7 @@ export function normalizeTask(raw) {
     dueDate: dateRe.test(raw.dueDate) ? raw.dueDate.slice(0, 10) : null,
     assignee: typeof raw.assignee === 'string' && raw.assignee.trim() ? raw.assignee.trim() : null,
     cost: Number.isFinite(cost) && cost > 0 ? cost : null,
+    notes: typeof raw.notes === 'string' && raw.notes.trim() ? raw.notes.trim() : null,
     done: !!raw.done,
     createdAt: dateRe.test(raw.createdAt) ? raw.createdAt : localToday(),
     completedAt: dateRe.test(raw.completedAt) ? raw.completedAt.slice(0, 10) : null,

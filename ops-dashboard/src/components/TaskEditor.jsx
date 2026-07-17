@@ -28,6 +28,7 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
     dueDate: defaults.dueDate !== undefined ? defaults.dueDate : localToday(),
     assignee: null,
     cost: null,
+    notes: null,
   };
 
   const [title, setTitle] = useState(base.title);
@@ -38,6 +39,10 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
   const [dueDate, setDueDate] = useState(base.dueDate || localToday());
   const [assignee, setAssignee] = useState(base.assignee || '');
   const [cost, setCost] = useState(base.cost != null ? String(base.cost) : '');
+  const [notes, setNotes] = useState(base.notes || '');
+  // Collapsed by default in quick-add so it doesn't slow down fast entry —
+  // but stays expanded when editing a task that already has notes.
+  const [showNotes, setShowNotes] = useState(!!base.notes);
 
   const save = (e) => {
     e.preventDefault();
@@ -55,6 +60,7 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
         category === 'maintenance' && Number.isFinite(parsedCost) && parsedCost > 0
           ? parsedCost
           : null,
+      notes: notes.trim() || null,
     });
   };
 
@@ -137,6 +143,27 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
               placeholder="0.00"
             />
           </>
+        )}
+
+        {showNotes ? (
+          <>
+            <label className="field-label" htmlFor="task-notes">
+              Notes (optional)
+            </label>
+            <textarea
+              id="task-notes"
+              className="input textarea"
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Location details, specific times, extra context…"
+              autoFocus
+            />
+          </>
+        ) : (
+          <button type="button" className="notes-toggle" onClick={() => setShowNotes(true)}>
+            + Add notes
+          </button>
         )}
 
         <div className="sheet-footer">
