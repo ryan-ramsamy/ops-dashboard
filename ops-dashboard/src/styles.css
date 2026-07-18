@@ -466,9 +466,10 @@ button {
 
 .task-card-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   min-width: 0;
+  width: 100%;
 }
 
 .cat-dot {
@@ -476,6 +477,7 @@ button {
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  margin-top: 8px;
 }
 
 .cat-dot.cat-maintenance {
@@ -495,11 +497,11 @@ button {
 }
 
 .task-title {
+  flex: 1;
   font-size: 15.5px;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
   min-width: 0;
 }
 
@@ -556,6 +558,7 @@ button {
   display: inline-flex;
   color: var(--ink-faint);
   flex: none;
+  margin-top: 5px;
 }
 
 .pill {
