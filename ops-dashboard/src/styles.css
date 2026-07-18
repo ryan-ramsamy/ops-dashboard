@@ -1,27 +1,126 @@
-/* Notion-style minimalist: white surfaces, hairline borders, 12px cards,
-   generous whitespace, sentence-case labels. No heavy shadows/gradients. */
+/* Notion-style minimalist: light/dark surfaces, hairline borders, 14-16px
+   cards, generous whitespace, sentence-case labels. No heavy shadows/gradients. */
 
 :root {
-  --bg: #ffffff;
-  --bg-subtle: #f7f7f5;
-  --ink: #37352f;
-  --ink-secondary: #787774;
-  --ink-faint: #6f6e6b; /* ~5:1 on white — was #9b9a97 (~2.7:1, fails WCAG AA) */
-  --border: #e9e7e4;
-  --accent: #2383e2;
-  --radius: 12px;
+  color-scheme: light dark;
 
-  --red-bg: #ffe2dd;
-  --red-ink: #c4554d;
-  --red-solid: #e0483f;
-  --green-solid: #2f9e58;
-  --amber-bg: #fdecc8;
-  --amber-ink: #a07d28;
-  --gray-bg: #f1f0ef;
-  --gray-ink: #787774;
+  --bg: oklch(98.5% 0.003 90);
+  --card: oklch(99.3% 0.002 90);
+  --ink: oklch(22% 0.008 90);
+  --ink-secondary: oklch(48% 0.006 90);
+  --ink-faint: oklch(64% 0.006 90);
+  --border: oklch(90% 0.005 90);
+  --accent: oklch(58% 0.15 250);
+  --radius: 14px;
+
+  --red-solid: oklch(58% 0.19 25);
+  --green-solid: oklch(58% 0.15 145);
+  --amber-solid: oklch(72% 0.15 70);
+
+  /* category accents (dot / bar) */
+  --cat-maintenance: oklch(66% 0.135 45);
+  --cat-housekeeping: oklch(66% 0.135 190);
+  --cat-ops: oklch(66% 0.135 265);
+  --cat-personal: oklch(66% 0.135 340);
+
+  /* property tags: tinted background + saturated ink */
+  --prop-mrp-bg: oklch(93% 0.02 250);
+  --prop-mrp-ink: oklch(38% 0.09 250);
+  --prop-lb-bg: oklch(93% 0.02 150);
+  --prop-lb-ink: oklch(38% 0.09 150);
+  --prop-kove-bg: oklch(93% 0.02 300);
+  --prop-kove-ink: oklch(38% 0.09 300);
+
+  /* priority pills */
+  --pri-high-bg: oklch(93% 0.03 25);
+  --pri-high-ink: oklch(40% 0.15 25);
+  --pri-med-bg: oklch(93% 0.03 70);
+  --pri-med-ink: oklch(40% 0.12 70);
+  --pri-low-bg: oklch(93% 0.03 145);
+  --pri-low-ink: oklch(35% 0.1 145);
+
+  --gray-bg: oklch(93% 0.003 90);
+  --gray-ink: oklch(48% 0.006 90);
 
   --header-h: 56px;
   --tabs-h: 58px;
+}
+
+/* Dark mode: tuned neutral dark (not pure black), desaturated accents so
+   nothing glows. Follows system preference by default; an explicit
+   data-theme attribute (set from the header's theme menu) always wins. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: oklch(19% 0.006 90);
+    --card: oklch(24% 0.006 90);
+    --ink: oklch(93% 0.004 90);
+    --ink-secondary: oklch(70% 0.006 90);
+    --ink-faint: oklch(56% 0.006 90);
+    --border: oklch(32% 0.006 90);
+    --accent: oklch(70% 0.11 250);
+
+    --red-solid: oklch(55% 0.15 25);
+    --green-solid: oklch(55% 0.13 145);
+    --amber-solid: oklch(65% 0.12 70);
+
+    --cat-maintenance: oklch(72% 0.1 45);
+    --cat-housekeeping: oklch(72% 0.1 190);
+    --cat-ops: oklch(72% 0.1 265);
+    --cat-personal: oklch(72% 0.1 340);
+
+    --prop-mrp-bg: oklch(30% 0.05 250);
+    --prop-mrp-ink: oklch(82% 0.09 250);
+    --prop-lb-bg: oklch(30% 0.05 150);
+    --prop-lb-ink: oklch(82% 0.09 150);
+    --prop-kove-bg: oklch(30% 0.05 300);
+    --prop-kove-ink: oklch(82% 0.09 300);
+
+    --pri-high-bg: oklch(30% 0.06 25);
+    --pri-high-ink: oklch(82% 0.1 25);
+    --pri-med-bg: oklch(30% 0.05 70);
+    --pri-med-ink: oklch(82% 0.09 70);
+    --pri-low-bg: oklch(30% 0.05 145);
+    --pri-low-ink: oklch(80% 0.09 145);
+
+    --gray-bg: oklch(28% 0.006 90);
+    --gray-ink: oklch(75% 0.006 90);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: oklch(19% 0.006 90);
+  --card: oklch(24% 0.006 90);
+  --ink: oklch(93% 0.004 90);
+  --ink-secondary: oklch(70% 0.006 90);
+  --ink-faint: oklch(56% 0.006 90);
+  --border: oklch(32% 0.006 90);
+  --accent: oklch(70% 0.11 250);
+
+  --red-solid: oklch(55% 0.15 25);
+  --green-solid: oklch(55% 0.13 145);
+  --amber-solid: oklch(65% 0.12 70);
+
+  --cat-maintenance: oklch(72% 0.1 45);
+  --cat-housekeeping: oklch(72% 0.1 190);
+  --cat-ops: oklch(72% 0.1 265);
+  --cat-personal: oklch(72% 0.1 340);
+
+  --prop-mrp-bg: oklch(30% 0.05 250);
+  --prop-mrp-ink: oklch(82% 0.09 250);
+  --prop-lb-bg: oklch(30% 0.05 150);
+  --prop-lb-ink: oklch(82% 0.09 150);
+  --prop-kove-bg: oklch(30% 0.05 300);
+  --prop-kove-ink: oklch(82% 0.09 300);
+
+  --pri-high-bg: oklch(30% 0.06 25);
+  --pri-high-ink: oklch(82% 0.1 25);
+  --pri-med-bg: oklch(30% 0.05 70);
+  --pri-med-ink: oklch(82% 0.09 70);
+  --pri-low-bg: oklch(30% 0.05 145);
+  --pri-low-ink: oklch(80% 0.09 145);
+
+  --gray-bg: oklch(28% 0.006 90);
+  --gray-ink: oklch(75% 0.006 90);
 }
 
 * {
@@ -37,7 +136,7 @@ body {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', ui-sans-serif, Roboto,
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', ui-sans-serif, Roboto,
     'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   line-height: 1.45;
@@ -72,7 +171,7 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.92);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   padding-top: env(safe-area-inset-top);
@@ -121,7 +220,7 @@ button {
 }
 
 .icon-btn:hover {
-  background: var(--bg-subtle);
+  background: var(--border);
   color: var(--ink);
 }
 
@@ -136,7 +235,7 @@ button {
   background: var(--red-solid);
   color: #fff;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 15px;
   text-align: center;
 }
@@ -150,10 +249,10 @@ button {
   right: 0;
   top: 40px;
   min-width: 160px;
-  background: var(--bg);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(15, 15, 15, 0.07);
+  box-shadow: 0 4px 16px rgba(15, 15, 15, 0.12);
   padding: 4px;
   z-index: 30;
 }
@@ -168,7 +267,21 @@ button {
 }
 
 .menu-item:hover {
-  background: var(--bg-subtle);
+  background: var(--bg);
+}
+
+.menu-item-active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.menu-section-label {
+  padding: 8px 10px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 /* ---------- bottom tabs ---------- */
@@ -179,7 +292,7 @@ button {
   right: 0;
   bottom: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.94);
+  background: color-mix(in oklab, var(--card) 94%, transparent);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
@@ -207,6 +320,27 @@ button {
   color: var(--ink);
 }
 
+.tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--red-solid);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
 /* ---------- chips ---------- */
 
 .chips {
@@ -221,7 +355,7 @@ button {
   padding: 0 13px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--card);
   font-size: 13px;
   color: var(--ink-secondary);
   white-space: nowrap;
@@ -230,7 +364,7 @@ button {
 .chip.selected {
   background: var(--ink);
   border-color: var(--ink);
-  color: #fff;
+  color: var(--bg);
 }
 
 /* ---------- groups & cards ---------- */
@@ -247,71 +381,290 @@ button {
 }
 
 .card {
-  background: var(--bg);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
 }
 
-/* ---------- task rows ---------- */
+/* A column of independently bordered cards (tasks), as opposed to .card's
+   single bordered block with divider lines (spend/inbox rows). */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-.task-row {
+/* ---------- task cards ---------- */
+
+.task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.task-card.is-overdue {
+  border-left: 4px solid var(--pri-high-ink);
+  padding-left: 11px;
+}
+
+.task-card.size-lg {
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.task-card.size-lg.is-overdue,
+.task-card.size-lg.accent-bar {
+  padding-left: 13px;
+}
+
+.task-card.size-lg .task-title {
+  font-size: 16.5px;
+  font-weight: 700;
+}
+
+.task-card.accent-bar {
+  border-left-width: 4px;
+  border-left-style: solid;
+  padding-left: 11px;
+}
+
+.task-card.accent-bar.cat-maintenance {
+  border-left-color: var(--cat-maintenance);
+}
+
+.task-card.accent-bar.cat-housekeeping {
+  border-left-color: var(--cat-housekeeping);
+}
+
+.task-card.accent-bar.cat-ops {
+  border-left-color: var(--cat-ops);
+}
+
+.task-card.accent-bar.cat-personal {
+  border-left-color: var(--cat-personal);
+}
+
+/* is-overdue wins over the category bar — red left edge takes priority. */
+.task-card.accent-bar.is-overdue {
+  border-left-color: var(--pri-high-ink);
+}
+
+.task-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+}
+
+.task-card-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
+  gap: 6px;
+  min-width: 0;
 }
 
-.task-row + .task-row,
-.spend-item + .spend-item {
-  border-top: 1px solid var(--border);
+.cat-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
 }
 
-/* ---------- swipe-to-delete (touch only; desktop untouched) ---------- */
+.cat-dot.cat-maintenance {
+  background: var(--cat-maintenance);
+}
+
+.cat-dot.cat-housekeeping {
+  background: var(--cat-housekeeping);
+}
+
+.cat-dot.cat-ops {
+  background: var(--cat-ops);
+}
+
+.cat-dot.cat-personal {
+  background: var(--cat-personal);
+}
+
+.task-title {
+  font-size: 15.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.is-done .task-title {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.task-card-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-assignee {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.prop-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.prop-mrp {
+  background: var(--prop-mrp-bg);
+  color: var(--prop-mrp-ink);
+}
+
+.prop-lb {
+  background: var(--prop-lb-bg);
+  color: var(--prop-lb-ink);
+}
+
+.prop-kove {
+  background: var(--prop-kove-bg);
+  color: var(--prop-kove-ink);
+}
+
+.task-card-meta {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.note-indicator {
+  display: inline-flex;
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pill-high {
+  background: var(--pri-high-bg);
+  color: var(--pri-high-ink);
+}
+
+.pill-med {
+  background: var(--pri-med-bg);
+  color: var(--pri-med-ink);
+}
+
+.pill-low {
+  background: var(--pri-low-bg);
+  color: var(--pri-low-ink);
+}
+
+.due-label {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.due-label.is-overdue {
+  color: var(--pri-high-ink);
+  font-weight: 700;
+}
+
+.check {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.task-card.size-lg .check {
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+/* Expands the tap target toward the row's own padding (never toward
+   the title button to its right, and clipped by the card's
+   overflow:hidden before it can reach a neighboring row). */
+.check::before {
+  content: '';
+  position: absolute;
+  inset: -10px 0 -10px -10px;
+}
+
+.check.checked {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------- swipe actions (Done / Snooze tray) ---------- */
 
 .swipe-row {
   position: relative;
 }
 
-.swipe-row + .swipe-row {
-  border-top: 1px solid var(--border);
-}
-
-.swipe-delete-action {
+.swipe-actions {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 76px;
-  background: var(--red-solid);
-  color: #fff;
+  width: 120px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.swipe-complete-action {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 76px;
-  background: var(--green-solid);
-  color: #fff;
+.swipe-action {
+  width: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.swipe-action-done {
+  background: var(--green-solid);
+}
+
+.swipe-action-snooze {
+  background: var(--amber-solid);
 }
 
 .swipe-content {
   position: relative;
   z-index: 1;
-  background: var(--bg);
   touch-action: pan-y;
-}
-
-.swipe-content .task-row {
-  background: var(--bg);
 }
 
 /* ---------- done section ---------- */
@@ -337,143 +690,6 @@ button {
 
 .done-caret.open {
   transform: rotate(90deg);
-}
-
-/* ---------- undo toast ---------- */
-
-.undo-toast {
-  position: fixed;
-  left: 16px;
-  right: 84px; /* clears the FAB, which sits at the same bottom-right corner */
-  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 12px);
-  max-width: 648px;
-  margin: 0 auto;
-  background: var(--ink);
-  color: #fff;
-  border-radius: 10px;
-  padding: 11px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  z-index: 25;
-  box-shadow: 0 6px 20px rgba(15, 15, 15, 0.18);
-}
-
-.undo-toast-text {
-  font-size: 13.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.undo-toast-action {
-  flex: none;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.check {
-  position: relative;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1.5px solid #c9c7c4;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Expands the tap target toward the row's own padding (never toward
-   the title button to its right, and clipped by the card's
-   overflow:hidden before it can reach a neighboring row). */
-.check::before {
-  content: '';
-  position: absolute;
-  inset: -10px 0 -10px -10px;
-}
-
-.check.checked {
-  background: var(--ink);
-  border-color: var(--ink);
-}
-
-.task-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 1px;
-}
-
-.task-title {
-  font-size: 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.is-done .task-title {
-  color: var(--ink-faint);
-  text-decoration: line-through;
-}
-
-.task-sub {
-  font-size: 12.5px;
-  color: var(--ink-faint);
-}
-
-.task-meta {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.task-date {
-  font-size: 12px;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-
-.note-indicator {
-  display: inline-flex;
-  color: var(--ink-faint);
-}
-
-.badge {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-.badge-high {
-  background: var(--red-bg);
-  color: var(--red-ink);
-}
-
-.badge-med {
-  background: var(--amber-bg);
-  color: var(--amber-ink);
-}
-
-.badge-low {
-  background: var(--gray-bg);
-  color: var(--gray-ink);
-}
-
-.badge-overdue {
-  background: var(--red-bg);
-  color: var(--red-ink);
 }
 
 /* ---------- filter bar, assignee chips & search ---------- */
@@ -523,11 +739,6 @@ button {
   color: var(--ink-secondary);
 }
 
-.empty-tappable:hover {
-  background: var(--bg-subtle);
-  border-color: var(--ink-faint);
-}
-
 .empty p {
   margin: 0;
 }
@@ -536,6 +747,12 @@ button {
   font-size: 13px;
   color: var(--ink-faint);
   margin-top: 4px !important;
+}
+
+/* ---------- now view ---------- */
+
+.now-view .group {
+  margin-bottom: 20px;
 }
 
 /* ---------- calendar ---------- */
@@ -563,7 +780,7 @@ button {
 }
 
 .segmented button.selected {
-  background: var(--bg-subtle);
+  background: var(--bg);
   color: var(--ink);
   font-weight: 500;
 }
@@ -610,7 +827,7 @@ button {
 }
 
 .day:hover {
-  background: var(--bg-subtle);
+  background: var(--bg);
 }
 
 .day-num {
@@ -623,7 +840,8 @@ button {
 }
 
 .day.out .day-num {
-  color: #cfcdca;
+  color: var(--ink-faint);
+  opacity: 0.5;
 }
 
 .day.today .day-num {
@@ -633,7 +851,7 @@ button {
 
 .day.selected .day-num {
   background: var(--ink);
-  color: #fff;
+  color: var(--bg);
   font-weight: 500;
 }
 
@@ -648,7 +866,7 @@ button {
 }
 
 .dot.done {
-  background: #cfcdca;
+  background: var(--border);
 }
 
 .dot.none {
@@ -683,6 +901,7 @@ button {
   font-size: 28px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .spend-breakdown {
@@ -694,6 +913,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 8px 4px;
 }
 
@@ -703,16 +923,34 @@ button {
 
 .property-tag {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   background: var(--gray-bg);
   color: var(--gray-ink);
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 999px;
+  flex: none;
 }
 
 .spend-amount {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 22px;
+  height: 20px;
+  flex: none;
+}
+
+.spark-bar {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--ink-faint);
 }
 
 .spend-item {
@@ -721,6 +959,10 @@ button {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 14px;
+}
+
+.spend-item + .spend-item {
+  border-top: 1px solid var(--border);
 }
 
 .spend-item-main {
@@ -760,7 +1002,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(15, 15, 15, 0.35);
+  background: rgba(15, 15, 15, 0.4);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -770,7 +1012,7 @@ button {
   width: 100%;
   max-height: 88dvh;
   overflow-y: auto;
-  background: var(--bg);
+  background: var(--card);
   border-radius: 16px 16px 0 0;
   padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
 }
@@ -808,7 +1050,7 @@ button {
 .input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 9px 12px;
   font: inherit;
   color: var(--ink);
@@ -880,24 +1122,24 @@ button {
 
 .btn {
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   font-size: 14px;
-  background: var(--bg);
+  background: var(--card);
 }
 
 .btn:hover {
-  background: var(--bg-subtle);
+  background: var(--bg);
 }
 
 .btn-primary {
   background: var(--ink);
   border-color: var(--ink);
-  color: #fff;
+  color: var(--bg);
 }
 
 .btn-primary:hover {
-  background: #26251f;
+  opacity: 0.9;
 }
 
 .btn-primary:disabled {
@@ -906,12 +1148,12 @@ button {
 }
 
 .btn-danger {
-  color: var(--red-ink);
+  color: var(--pri-high-ink);
   border-color: var(--border);
 }
 
 .btn-danger:hover {
-  background: var(--red-bg);
+  background: var(--pri-high-bg);
 }
 
 /* ---------- quick capture ---------- */
@@ -950,6 +1192,11 @@ button {
   padding: 11px 8px 11px 14px;
 }
 
+.task-sub {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
 /* ---------- summary ---------- */
 
 .summary-row {
@@ -975,11 +1222,11 @@ button {
 }
 
 .summary-row-count-red {
-  color: var(--red-ink);
+  color: var(--pri-high-ink);
 }
 
 .summary-row-count-amber {
-  color: var(--amber-ink);
+  color: var(--pri-med-ink);
 }
 
 .summary-hint {
@@ -1007,17 +1254,17 @@ button {
 
 .fab {
   pointer-events: auto;
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: var(--ink);
-  color: #fff;
+  color: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(15, 15, 15, 0.22);
+  box-shadow: 0 4px 14px rgba(15, 15, 15, 0.28);
 }
 
 .fab:hover {
-  background: #26251f;
+  opacity: 0.9;
 }

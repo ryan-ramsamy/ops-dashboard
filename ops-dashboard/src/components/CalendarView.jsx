@@ -116,7 +116,7 @@ export default function CalendarView({ tasks, selected, onSelect, onToggle, onEd
       <section className="group">
         <h2 className="group-label">{formatDayLong(selected)}</h2>
         {dayTasks.length ? (
-          <div className="card">
+          <div className="card-list">
             {dayTasks.map((t) => (
               <TaskRow key={t.id} task={t} onToggle={onToggle} onEdit={onEdit} />
             ))}
@@ -124,7 +124,7 @@ export default function CalendarView({ tasks, selected, onSelect, onToggle, onEd
         ) : (
           <div className="empty">
             <p>Nothing due this day.</p>
-            <p className="empty-hint">Tap + to add a task on this date.</p>
+            <p className="empty-hint">Tap the + button to add a task.</p>
           </div>
         )}
       </section>

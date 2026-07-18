@@ -25,6 +25,23 @@ export function daysBetween(a, b) {
   return Math.round((parseDate(b) - parseDate(a)) / 86400000);
 }
 
+// Rollover moved this task here from an earlier date — the single source
+// of truth for "is this overdue" used by every view that buckets tasks.
+export function isOverdue(task) {
+  return !task.done && !!task.originalDueDate && !!task.dueDate && task.originalDueDate < task.dueDate;
+}
+
+// The due-date label shown on a task card: "Nd overdue", "Today",
+// "Someday", or a short weekday+date for anything further out.
+export function formatDueLabel(task) {
+  if (isOverdue(task)) {
+    return `${daysBetween(task.originalDueDate, task.dueDate)}d overdue`;
+  }
+  if (!task.dueDate) return 'Someday';
+  if (task.dueDate === localToday()) return 'Today';
+  return formatDayShort(task.dueDate);
+}
+
 // Advances a date by a recurrence rule ({ unit: 'day'|'week'|'month',
 // interval: n }). Month steps clamp to the last day of a shorter month
 // (Jan 31 + 1 month = Feb 28), matching how people expect "monthly" to

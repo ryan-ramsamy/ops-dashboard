@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTasks } from './hooks/useTasks.js';
 import { useSpend } from './hooks/useSpend.js';
-import { localToday } from './dates.js';
+import { localToday, addDays, isOverdue } from './dates.js';
+import { getStoredTheme, applyTheme, storeTheme } from './theme.js';
 import Header from './components/Header.jsx';
 import Tabs from './components/Tabs.jsx';
+import NowView from './components/NowView.jsx';
 import TasksView from './components/TasksView.jsx';
 import CalendarView from './components/CalendarView.jsx';
 import SpendView from './components/SpendView.jsx';
@@ -12,6 +14,7 @@ import TaskEditor from './components/TaskEditor.jsx';
 import SpendEditor from './components/SpendEditor.jsx';
 import QuickCapture from './components/QuickCapture.jsx';
 import InboxView from './components/InboxView.jsx';
+import AddTaskSheet from './components/AddTaskSheet.jsx';
 
 export default function App() {
   const { tasks, addTask, updateTask, toggleDone, deleteTask, importMerge } = useTasks();
@@ -22,18 +25,47 @@ export default function App() {
     deleteSpend,
     importMergeSpend,
   } = useSpend();
-  const [tab, setTab] = useState('tasks');
+  const [tab, setTab] = useState('now');
   const [selectedDate, setSelectedDate] = useState(localToday());
-  const [editor, setEditor] = useState(null); // null | { task } | { defaults }
+  const [editor, setEditor] = useState(null); // null | { task }
   const [spendEditor, setSpendEditor] = useState(null); // null | { entry } | {}
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [theme, setTheme] = useState(() => getStoredTheme());
+
+  useEffect(() => applyTheme(theme), [theme]);
+  const changeTheme = (t) => {
+    storeTheme(t);
+    setTheme(t);
+  };
 
   const inboxTasks = tasks.filter((t) => t.inbox && !t.done);
+  const overdueCount = tasks.filter(isOverdue).length;
 
-  const openAdd = () =>
-    setEditor({ defaults: tab === 'calendar' ? { dueDate: selectedDate } : {} });
   const openEdit = (task) => setEditor({ task });
+
+  // "n" opens quick-add from anywhere — mirrors the FAB, for the
+  // laptop/browser-tab use case where there's no thumb reaching for a
+  // corner button. Ignored while typing in any field, or a sheet is open.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (editor || spendEditor || quickCaptureOpen || inboxOpen || addTaskOpen) return;
+      const active = document.activeElement;
+      const tag = active?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
+      e.preventDefault();
+      setAddTaskOpen(true);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editor, spendEditor, quickCaptureOpen, inboxOpen, addTaskOpen]);
+
+  const handleAddTask = ({ title, category }) => {
+    addTask({ title, category, dueDate: localToday() });
+    setAddTaskOpen(false);
+  };
 
   const handleQuickCapture = (title) => {
     addTask({ title, inbox: true });
@@ -47,27 +79,14 @@ export default function App() {
     openEdit(task);
   };
 
-  // "n" opens quick-add from anywhere on the Tasks/Calendar tabs (mirrors
-  // the header's + button) — for the laptop/browser-tab use case, where
-  // there's no thumb reaching for a corner button. Ignored while typing
-  // in any field, or while a sheet is already open.
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (editor || spendEditor || quickCaptureOpen || inboxOpen) return;
-      const active = document.activeElement;
-      const tag = active?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
-      e.preventDefault();
-      openAdd();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [tab, selectedDate, editor, spendEditor, quickCaptureOpen, inboxOpen]);
+  const handleSnooze = (task) =>
+    updateTask(task.id, {
+      dueDate: addDays(task.dueDate || localToday(), 1),
+      originalDueDate: null,
+    });
 
   const handleSave = (values) => {
-    if (editor.task) updateTask(editor.task.id, values);
-    else addTask(values);
+    updateTask(editor.task.id, values);
     setEditor(null);
   };
 
@@ -102,20 +121,18 @@ export default function App() {
         tasks={tasks}
         personalSpend={personalSpend}
         onImport={handleImport}
-        onAdd={openAdd}
         onQuickCapture={() => setQuickCaptureOpen(true)}
         onOpenInbox={() => setInboxOpen(true)}
         inboxCount={inboxTasks.length}
+        theme={theme}
+        onThemeChange={changeTheme}
       />
       <main className="content">
+        {tab === 'now' && (
+          <NowView tasks={tasks} onToggle={toggleDone} onEdit={openEdit} onSnooze={handleSnooze} />
+        )}
         {tab === 'tasks' && (
-          <TasksView
-            tasks={tasks}
-            onToggle={toggleDone}
-            onEdit={openEdit}
-            onDelete={deleteTask}
-            onAdd={openAdd}
-          />
+          <TasksView tasks={tasks} onToggle={toggleDone} onEdit={openEdit} onSnooze={handleSnooze} />
         )}
         {tab === 'calendar' && (
           <CalendarView
@@ -136,13 +153,21 @@ export default function App() {
         )}
         {tab === 'summary' && <SummaryView tasks={tasks} inboxCount={inboxTasks.length} />}
       </main>
-      <Tabs tab={tab} onChange={setTab} />
+      <Tabs tab={tab} onChange={setTab} overdueCount={overdueCount} />
+
+      <div className="fab-wrap">
+        <button className="fab" aria-label="Add task" onClick={() => setAddTaskOpen(true)}>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      </div>
+
       {editor && (
         <TaskEditor
           task={editor.task}
-          defaults={editor.defaults}
           onSave={handleSave}
-          onDelete={editor.task ? handleDelete : undefined}
+          onDelete={handleDelete}
           onClose={() => setEditor(null)}
         />
       )}
@@ -154,6 +179,7 @@ export default function App() {
           onClose={() => setSpendEditor(null)}
         />
       )}
+      {addTaskOpen && <AddTaskSheet onSave={handleAddTask} onClose={() => setAddTaskOpen(false)} />}
       {quickCaptureOpen && (
         <QuickCapture onSave={handleQuickCapture} onClose={() => setQuickCaptureOpen(false)} />
       )}

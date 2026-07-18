@@ -18,6 +18,9 @@ export const SPEND_CATEGORIES = ['Groceries', 'Transport', 'Bills', 'Dining', 'S
 
 export const sentenceCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
+// Lowercase slug for property-specific CSS classes (prop-mrp, prop-lb, prop-kove).
+export const propertySlug = (p) => (p ? p.toLowerCase() : null);
+
 export function makeId() {
   return 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 }

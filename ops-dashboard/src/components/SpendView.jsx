@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PROPERTIES, formatRand } from '../store.js';
+import { PROPERTIES, formatRand, propertySlug } from '../store.js';
 import { localToday, addMonths, monthKeyOf, formatMonthYear, formatDayShort } from '../dates.js';
 import MonthNav from './MonthNav.jsx';
 
@@ -11,6 +11,23 @@ function costMonth(t) {
 
 function costDate(t) {
   return t.dueDate || t.completedAt || t.createdAt;
+}
+
+// Last-3-months trend at a glance, colored to match the property's tag —
+// answers "is this property trending up" without a separate chart screen.
+function Sparkline({ values, colorVar }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className="spark" aria-hidden="true">
+      {values.map((v, i) => (
+        <span
+          key={i}
+          className="spark-bar"
+          style={{ height: `${Math.max(12, Math.round((v / max) * 100))}%`, background: `var(${colorVar})` }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default function SpendView({ tasks, personalSpend, onAddPersonal, onEditPersonal }) {
@@ -27,6 +44,10 @@ export default function SpendView({ tasks, personalSpend, onAddPersonal, onEditP
     if (t.property) perProperty[t.property] += Number(t.cost);
     else untagged += Number(t.cost);
   }
+
+  const trendMonths = [addMonths(month, -2), addMonths(month, -1), month];
+  const propertyTrend = (p) =>
+    trendMonths.map((m) => costed.filter((t) => t.property === p && costMonth(t) === m).reduce((s, t) => s + Number(t.cost), 0));
 
   const maintenanceItems = [...scopedTasks].sort((a, b) => (costDate(a) < costDate(b) ? 1 : -1));
 
@@ -62,7 +83,8 @@ export default function SpendView({ tasks, personalSpend, onAddPersonal, onEditP
         <div className="spend-breakdown">
           {PROPERTIES.map((p) => (
             <div key={p} className="spend-row">
-              <span className="property-tag">{p}</span>
+              <span className={`property-tag prop-${propertySlug(p)}`}>{p}</span>
+              <Sparkline values={propertyTrend(p)} colorVar={`--prop-${propertySlug(p)}-ink`} />
               <span className="spend-amount">{formatRand(perProperty[p])}</span>
             </div>
           ))}

@@ -14,6 +14,14 @@
     <title>Ops dashboard</title>
   </head>
   <body>
+    <script>
+      // Applied before first paint so a stored theme override never flashes
+      // the wrong palette — main.jsx/theme.js re-applies this on every load.
+      try {
+        var t = localStorage.getItem('ops-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

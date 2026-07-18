@@ -1,16 +1,14 @@
-import { localToday, addDays, formatDayLong } from '../dates.js';
+import { localToday, addDays, formatDayLong, isOverdue } from '../dates.js';
 
 // Read-only digest across every section — no editing here, just buckets
-// to glance at. Mirrors the same date logic TasksView/TaskRow use so the
+// to glance at. Uses the same isOverdue check as every other view so the
 // counts always agree with what those views show.
 function bucketTasks(tasks) {
   const today = localToday();
   const weekEnd = addDays(today, 7);
   const open = tasks.filter((t) => !t.done && !t.inbox);
 
-  const overdue = open.filter(
-    (t) => t.originalDueDate && t.dueDate && t.originalDueDate < t.dueDate
-  );
+  const overdue = open.filter(isOverdue);
   const overdueIds = new Set(overdue.map((t) => t.id));
 
   const dueToday = open.filter((t) => t.dueDate === today && !overdueIds.has(t.id));

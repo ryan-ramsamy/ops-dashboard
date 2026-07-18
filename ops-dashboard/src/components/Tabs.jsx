@@ -1,5 +1,15 @@
 const TABS = [
   {
+    id: 'now',
+    label: 'Now',
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
+      </svg>
+    ),
+  },
+  {
     id: 'tasks',
     label: 'Tasks',
     icon: (
@@ -11,7 +21,7 @@ const TABS = [
   },
   {
     id: 'calendar',
-    label: 'Calendar',
+    label: 'Cal',
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3.5" y="5" width="17" height="16" rx="3" />
@@ -30,7 +40,7 @@ const TABS = [
   },
   {
     id: 'summary',
-    label: 'Summary',
+    label: 'Sum',
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="4" width="14" height="17" rx="2" />
@@ -40,7 +50,7 @@ const TABS = [
   },
 ];
 
-export default function Tabs({ tab, onChange }) {
+export default function Tabs({ tab, onChange, overdueCount = 0 }) {
   return (
     <nav className="tabs">
       <div className="tabs-inner">
@@ -51,7 +61,12 @@ export default function Tabs({ tab, onChange }) {
             aria-current={tab === t.id ? 'page' : undefined}
             onClick={() => onChange(t.id)}
           >
-            {t.icon}
+            <span className="tab-icon-wrap">
+              {t.icon}
+              {t.id === 'tasks' && overdueCount > 0 && (
+                <span className="tab-badge">{overdueCount > 99 ? '99+' : overdueCount}</span>
+              )}
+            </span>
             <span>{t.label}</span>
           </button>
         ))}

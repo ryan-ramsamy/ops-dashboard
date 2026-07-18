@@ -19,23 +19,14 @@ function ChipRow({ options, value, onChange, labels }) {
   );
 }
 
-export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onClose }) {
-  const base = task || {
-    title: '',
-    category: defaults.category || 'maintenance',
-    property: defaults.property || null,
-    priority: 'med',
-    dueDate: defaults.dueDate !== undefined ? defaults.dueDate : localToday(),
-    assignee: null,
-    cost: null,
-    notes: null,
-    recurrence: null,
-  };
-
+// Editing an existing task — brand-new tasks come from the lighter-weight
+// AddTaskSheet behind the FAB; this is where property/priority/recurrence/
+// notes get filled in (and how an Inbox item gets triaged into a section).
+export default function TaskEditor({ task, onSave, onDelete, onClose }) {
   // Map a stored recurrence rule back onto the Repeat chips. Custom is
   // always day-based in this UI; week rules with interval > 1 (possible
   // via hand-edited backups) render as custom day counts.
-  const rec = base.recurrence;
+  const rec = task.recurrence;
   const initialRepeat = !rec
     ? 'none'
     : rec.unit === 'month'
@@ -45,20 +36,18 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
         : 'custom';
   const initialCustomDays = !rec || rec.unit === 'month' ? 7 : rec.unit === 'week' ? rec.interval * 7 : rec.interval;
 
-  const [title, setTitle] = useState(base.title);
-  const [category, setCategory] = useState(base.category);
-  const [property, setProperty] = useState(base.property);
-  const [priority, setPriority] = useState(base.priority);
-  const [someday, setSomeday] = useState(!base.dueDate);
-  const [dueDate, setDueDate] = useState(base.dueDate || localToday());
-  const [assignee, setAssignee] = useState(base.assignee || '');
-  const [cost, setCost] = useState(base.cost != null ? String(base.cost) : '');
-  const [notes, setNotes] = useState(base.notes || '');
+  const [title, setTitle] = useState(task.title);
+  const [category, setCategory] = useState(task.category);
+  const [property, setProperty] = useState(task.property);
+  const [priority, setPriority] = useState(task.priority);
+  const [someday, setSomeday] = useState(!task.dueDate);
+  const [dueDate, setDueDate] = useState(task.dueDate || localToday());
+  const [assignee, setAssignee] = useState(task.assignee || '');
+  const [cost, setCost] = useState(task.cost != null ? String(task.cost) : '');
+  const [notes, setNotes] = useState(task.notes || '');
   const [repeat, setRepeat] = useState(initialRepeat);
   const [customDays, setCustomDays] = useState(String(initialCustomDays));
-  // Collapsed by default in quick-add so it doesn't slow down fast entry —
-  // but stays expanded when editing a task that already has notes.
-  const [showNotes, setShowNotes] = useState(!!base.notes);
+  const [showNotes, setShowNotes] = useState(!!task.notes);
 
   const save = (e) => {
     e.preventDefault();
@@ -92,7 +81,7 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
       inbox: false,
       // A deliberate date change means the task is no longer "overdue
       // from" anywhere — clear the rollover marker.
-      ...(task && newDueDate !== task.dueDate ? { originalDueDate: null } : {}),
+      ...(newDueDate !== task.dueDate ? { originalDueDate: null } : {}),
     });
   };
 
@@ -104,14 +93,13 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
       }}
     >
       <form className="sheet" onSubmit={save}>
-        <h2 className="sheet-title">{task ? 'Edit task' : 'New task'}</h2>
+        <h2 className="sheet-title">Edit task</h2>
 
         <input
           className="input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Task title"
-          autoFocus={!task}
         />
 
         <label className="field-label">Category</label>
@@ -219,17 +207,15 @@ export default function TaskEditor({ task, defaults = {}, onSave, onDelete, onCl
         )}
 
         <div className="sheet-footer">
-          {onDelete && (
-            <button type="button" className="btn btn-danger" onClick={onDelete}>
-              Delete
-            </button>
-          )}
+          <button type="button" className="btn btn-danger" onClick={onDelete}>
+            Delete
+          </button>
           <span className="spacer" />
           <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={!title.trim()}>
-            {task ? 'Save' : 'Add task'}
+            Save
           </button>
         </div>
       </form>
