@@ -1353,6 +1353,10 @@ button {
   z-index: 21;
 }
 
+.fab-anchor {
+  position: relative;
+}
+
 .fab {
   pointer-events: auto;
   width: 54px;
@@ -1364,8 +1368,86 @@ button {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(15, 15, 15, 0.28);
+  position: relative;
+  z-index: 1;
 }
 
 .fab:hover {
   opacity: 0.9;
+}
+
+.fab svg {
+  transition: transform 0.2s ease;
+}
+
+.fab-open svg {
+  transform: rotate(45deg);
+}
+
+/* Tight arc of date-shortcut chips, anchored to the FAB's own corner —
+   .fan-chips is a zero-size point so each chip's un-transformed resting
+   position sits exactly on the FAB, then --tx/--ty (set inline per chip)
+   carries it out along the arc. Ease-out, no bounce/overshoot. */
+.fan-chips {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.fan-chip {
+  position: absolute;
+  right: 0;
+  bottom: 27px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(15, 15, 15, 0.16);
+  opacity: 0;
+  transform: translate(0, 0) scale(0.4);
+  transform-origin: right center;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease-out;
+  pointer-events: none;
+}
+
+.fan-chip svg {
+  flex: none;
+  color: var(--ink-secondary);
+}
+
+.fan-chip-open {
+  opacity: 1;
+  transform: translate(var(--tx), var(--ty)) scale(1);
+  pointer-events: auto;
+}
+
+/* ---------- due-date readout (AddTaskSheet) ---------- */
+
+.due-readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.due-readout-change {
+  font-size: 12.5px;
+  color: var(--ink-secondary);
 }

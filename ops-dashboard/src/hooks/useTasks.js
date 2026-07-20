@@ -38,13 +38,27 @@ export function useTasks() {
   // Cache-first paint, then reconcile with Supabase — on mount and again
   // whenever the tab regains focus/visibility (covers switching back
   // from another device/tab without leaving this one open).
+  //
+  // The very first fetch is merged rather than overwritten: it races
+  // against whatever the user does in the second or two before it
+  // resolves (very possible now that the FAB's Today/Tomorrow chips make
+  // "open app, add task" nearly instant), and blindly replacing local
+  // state with a pre-add server snapshot would silently erase a task
+  // added in that window. mergeTasks keeps any locally-added task the
+  // fetch doesn't know about yet, while still letting the server's copy
+  // win for ids it does know. Later syncs (focus/visibility) overwrite
+  // outright, same as before — by then any optimistic mutation has long
+  // since resolved, and an overwrite is what lets a remote delete/edit
+  // from another device actually take effect here.
+  const hasSyncedOnceRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
       try {
         const fresh = rolloverTasks(await fetchTasks());
         if (cancelled) return;
-        persist(fresh);
+        persist(hasSyncedOnceRef.current ? fresh : mergeTasks(tasksRef.current, fresh));
+        hasSyncedOnceRef.current = true;
         markSynced();
       } catch (e) {
         if (!cancelled) markOffline(e);

@@ -18,6 +18,7 @@ import QuickCapture from './components/QuickCapture.jsx';
 import InboxView from './components/InboxView.jsx';
 import AddTaskSheet from './components/AddTaskSheet.jsx';
 import MigrationPrompt from './components/MigrationPrompt.jsx';
+import FabMenu from './components/FabMenu.jsx';
 
 // Everything that touches task/spend data. Only mounted once App.jsx has
 // confirmed a signed-in session — useTasks/useSpend fire their first
@@ -43,7 +44,8 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(localToday());
   const [editor, setEditor] = useState(null); // null | { task }
   const [spendEditor, setSpendEditor] = useState(null); // null | { entry } | {}
-  const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const [fanOpen, setFanOpen] = useState(false);
+  const [addTaskDefaults, setAddTaskDefaults] = useState(null); // null | { dueDate, showPicker }
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [theme, setTheme] = useState(() => getStoredTheme());
@@ -106,24 +108,38 @@ export default function Dashboard() {
 
   // "n" opens quick-add from anywhere — mirrors the FAB, for the
   // laptop/browser-tab use case where there's no thumb reaching for a
-  // corner button. Ignored while typing in any field, or a sheet is open.
+  // corner button. Bypasses the fan-out arc entirely (defaults to Today,
+  // the same as the arc's fastest chip) since a keyboard shortcut is
+  // already a one-step power-user path. Ignored while typing in any
+  // field, or a sheet is open.
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (editor || spendEditor || quickCaptureOpen || inboxOpen || addTaskOpen) return;
+      if (editor || spendEditor || quickCaptureOpen || inboxOpen || addTaskDefaults) return;
       const active = document.activeElement;
       const tag = active?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
       e.preventDefault();
-      setAddTaskOpen(true);
+      setAddTaskDefaults({ dueDate: localToday(), showPicker: false });
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [editor, spendEditor, quickCaptureOpen, inboxOpen, addTaskOpen]);
+  }, [editor, spendEditor, quickCaptureOpen, inboxOpen, addTaskDefaults]);
 
-  const handleAddTask = ({ title, category }) => {
-    addTask({ title, category, dueDate: localToday() });
-    setAddTaskOpen(false);
+  // The fan chip picked decides the preset due date and whether the
+  // sheet opens with the date picker already exposed (Schedule) or
+  // collapsed into a quick "Today"/"Tomorrow" readout.
+  const openAddTask = (key) => {
+    setFanOpen(false);
+    const today = localToday();
+    if (key === 'tomorrow') setAddTaskDefaults({ dueDate: addDays(today, 1), showPicker: false });
+    else if (key === 'schedule') setAddTaskDefaults({ dueDate: today, showPicker: true });
+    else setAddTaskDefaults({ dueDate: today, showPicker: false });
+  };
+
+  const handleAddTask = ({ title, category, dueDate }) => {
+    addTask({ title, category, dueDate });
+    setAddTaskDefaults(null);
   };
 
   const handleQuickCapture = (title) => {
@@ -216,13 +232,7 @@ export default function Dashboard() {
       </main>
       <Tabs tab={tab} onChange={setTab} overdueCount={overdueCount} />
 
-      <div className="fab-wrap">
-        <button className="fab" aria-label="Add task" onClick={() => setAddTaskOpen(true)}>
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
-      </div>
+      <FabMenu open={fanOpen} onToggle={setFanOpen} onPick={openAddTask} />
 
       {editor && (
         <TaskEditor
@@ -240,7 +250,14 @@ export default function Dashboard() {
           onClose={() => setSpendEditor(null)}
         />
       )}
-      {addTaskOpen && <AddTaskSheet onSave={handleAddTask} onClose={() => setAddTaskOpen(false)} />}
+      {addTaskDefaults && (
+        <AddTaskSheet
+          onSave={handleAddTask}
+          onClose={() => setAddTaskDefaults(null)}
+          defaultDueDate={addTaskDefaults.dueDate}
+          showDatePicker={addTaskDefaults.showPicker}
+        />
+      )}
       {quickCaptureOpen && (
         <QuickCapture onSave={handleQuickCapture} onClose={() => setQuickCaptureOpen(false)} />
       )}

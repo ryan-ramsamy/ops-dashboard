@@ -29,13 +29,19 @@ export function useSpend() {
     setSyncState('offline');
   };
 
+  // First fetch is merged, not overwritten — see useTasks.js for why
+  // (it races an optimistic add/edit made in the second or two before it
+  // resolves). Later syncs overwrite outright so remote deletes/edits
+  // still take effect.
+  const hasSyncedOnceRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
       try {
         const fresh = await fetchPersonalSpend();
         if (cancelled) return;
-        persist(fresh);
+        persist(hasSyncedOnceRef.current ? fresh : mergePersonalSpend(spendRef.current, fresh));
+        hasSyncedOnceRef.current = true;
         markSynced();
       } catch (e) {
         if (!cancelled) markOffline(e);
