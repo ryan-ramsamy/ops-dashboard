@@ -1,15 +1,9 @@
-// Data layer for ops-dashboard tasks.
-// Every component talks to THIS file, never to localStorage directly —
-// same pattern as maintenance-tracker's store.js. Moving to a hosted DB
-// later means swapping these function bodies only.
+// Pure data-shape layer for ops-dashboard: constants, factories, and
+// validators for tasks and personal-spend entries. No persistence lives
+// here — Supabase reads/writes and the localStorage offline cache are in
+// sync.js, which imports these shapes/normalizers.
 
 import { localToday } from './dates.js';
-
-const KEY = 'ops-tasks-v1';
-const SNAP_PREFIX = 'ops-snapshot-';
-const SPEND_KEY = 'ops-personal-spend-v1';
-const SPEND_SNAP_PREFIX = 'ops-spend-snapshot-';
-const SNAPS_TO_KEEP = 3;
 
 export const CATEGORIES = ['maintenance', 'housekeeping', 'ops', 'personal'];
 export const PROPERTIES = ['MRP', 'LB', 'Kove'];
@@ -83,45 +77,6 @@ export function normalizeTask(raw) {
   };
 }
 
-export function getTasks() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    return (Array.isArray(list) ? list : []).map(normalizeTask).filter(Boolean);
-  } catch (e) {
-    console.error('Failed to read tasks', e);
-    return [];
-  }
-}
-
-export function saveTasks(tasks) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(tasks));
-    snapshot(SNAP_PREFIX, tasks);
-    return true;
-  } catch (e) {
-    console.error('Failed to save tasks', e);
-    return false;
-  }
-}
-
-// Rolling daily snapshots inside localStorage — survives an accidental
-// bulk-delete or a bad import, though NOT a full browser-data wipe.
-// For that, use the JSON backup download.
-function snapshot(prefix, data) {
-  try {
-    localStorage.setItem(prefix + localToday(), JSON.stringify(data));
-    const snapKeys = Object.keys(localStorage)
-      .filter((k) => k.startsWith(prefix))
-      .sort();
-    while (snapKeys.length > SNAPS_TO_KEEP) {
-      localStorage.removeItem(snapKeys.shift());
-    }
-  } catch (e) {
-    /* snapshots are best-effort */
-  }
-}
-
 /* ---------- personal spend entries (not tied to a task) ---------- */
 
 export function newSpend(data) {
@@ -151,28 +106,6 @@ export function normalizeSpend(raw) {
     date: dateRe.test(raw.date) ? raw.date.slice(0, 10) : localToday(),
     createdAt: dateRe.test(raw.createdAt) ? raw.createdAt : localToday(),
   };
-}
-
-export function getPersonalSpend() {
-  try {
-    const raw = localStorage.getItem(SPEND_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    return (Array.isArray(list) ? list : []).map(normalizeSpend).filter(Boolean);
-  } catch (e) {
-    console.error('Failed to read personal spend', e);
-    return [];
-  }
-}
-
-export function savePersonalSpend(entries) {
-  try {
-    localStorage.setItem(SPEND_KEY, JSON.stringify(entries));
-    snapshot(SPEND_SNAP_PREFIX, entries);
-    return true;
-  } catch (e) {
-    console.error('Failed to save personal spend', e);
-    return false;
-  }
 }
 
 // Tweek-style rollover: an unfinished dated task whose date has passed

@@ -12,6 +12,8 @@ export default function Header({
   inboxCount = 0,
   theme,
   onThemeChange,
+  syncStatus,
+  onLogout,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -46,7 +48,17 @@ export default function Header({
   return (
     <header className="header">
       <div className="header-inner">
-        <h1 className="header-title">Ops dashboard</h1>
+        <div className="header-title-wrap">
+          <h1 className="header-title">Ops dashboard</h1>
+          {syncStatus && syncStatus !== 'synced' && (
+            <span
+              className={`sync-pill sync-pill-${syncStatus}`}
+              title={syncStatus === 'offline' ? "Can't reach Supabase — showing the last synced copy" : 'Loading from Supabase…'}
+            >
+              {syncStatus === 'offline' ? 'Offline' : 'Syncing…'}
+            </span>
+          )}
+        </div>
         <div className="header-actions">
           <button className="icon-btn" aria-label="Quick capture" onClick={onQuickCapture}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -106,6 +118,16 @@ export default function Header({
                     {sentenceCase(t)}
                   </button>
                 ))}
+                <div className="menu-divider" />
+                <button
+                  className="menu-item menu-item-danger"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onLogout();
+                  }}
+                >
+                  Log out
+                </button>
               </div>
             )}
           </div>

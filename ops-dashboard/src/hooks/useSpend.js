@@ -1,27 +1,80 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { newSpend, mergePersonalSpend } from '../store.js';
 import {
-  getPersonalSpend,
-  savePersonalSpend,
-  newSpend,
-  mergePersonalSpend,
-} from '../store.js';
+  readSpendCache,
+  writeSpendCache,
+  fetchPersonalSpend,
+  insertSpendRow,
+  updateSpendRow,
+  deleteSpendRow,
+  upsertSpendRows,
+} from '../sync.js';
 
+// Same cache-first + fetch-on-focus + optimistic-mutation pattern as
+// useTasks — see that file for the fuller explanation.
 export function useSpend() {
-  const [personalSpend, setPersonalSpend] = useState(() => getPersonalSpend());
+  const [personalSpend, setPersonalSpend] = useState(() => readSpendCache());
+  const [syncState, setSyncState] = useState('loading');
+  const spendRef = useRef(personalSpend);
+
+  const persist = (next) => {
+    spendRef.current = next;
+    setPersonalSpend(next);
+    writeSpendCache(next);
+  };
+
+  const markSynced = () => setSyncState('synced');
+  const markOffline = (e) => {
+    console.error('Supabase spend sync failed', e);
+    setSyncState('offline');
+  };
 
   useEffect(() => {
-    savePersonalSpend(personalSpend);
-  }, [personalSpend]);
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const fresh = await fetchPersonalSpend();
+        if (cancelled) return;
+        persist(fresh);
+        markSynced();
+      } catch (e) {
+        if (!cancelled) markOffline(e);
+      }
+    };
+    sync();
+    const onVisible = () => {
+      if (!document.hidden) sync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', sync);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', sync);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const addSpend = (data) => setPersonalSpend((es) => [...es, newSpend(data)]);
+  const addSpend = (data) => {
+    const entry = newSpend(data);
+    persist([...spendRef.current, entry]);
+    insertSpendRow(entry).then(markSynced).catch(markOffline);
+  };
 
-  const updateSpend = (id, patch) =>
-    setPersonalSpend((es) => es.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  const updateSpend = (id, patch) => {
+    persist(spendRef.current.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+    updateSpendRow(id, patch).then(markSynced).catch(markOffline);
+  };
 
-  const deleteSpend = (id) => setPersonalSpend((es) => es.filter((e) => e.id !== id));
+  const deleteSpend = (id) => {
+    persist(spendRef.current.filter((e) => e.id !== id));
+    deleteSpendRow(id).then(markSynced).catch(markOffline);
+  };
 
-  const importMergeSpend = (imported) =>
-    setPersonalSpend((es) => mergePersonalSpend(es, imported));
+  const importMergeSpend = (imported) => {
+    persist(mergePersonalSpend(spendRef.current, imported));
+    upsertSpendRows(imported).then(markSynced).catch(markOffline);
+  };
 
-  return { personalSpend, addSpend, updateSpend, deleteSpend, importMergeSpend };
+  return { personalSpend, addSpend, updateSpend, deleteSpend, importMergeSpend, syncState };
 }

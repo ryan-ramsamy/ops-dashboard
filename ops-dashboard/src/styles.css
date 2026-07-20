@@ -196,11 +196,38 @@ button {
   justify-content: space-between;
 }
 
+.header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .header-title {
   font-size: 17px;
   font-weight: 600;
   margin: 0;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.sync-pill {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.sync-pill-loading {
+  background: var(--gray-bg);
+  color: var(--gray-ink);
+}
+
+.sync-pill-offline {
+  background: var(--pri-high-bg);
+  color: var(--pri-high-ink);
 }
 
 .header-actions {
@@ -291,6 +318,65 @@ button {
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 2px;
+}
+
+.menu-item-danger {
+  color: var(--pri-high-ink);
+}
+
+/* ---------- login ---------- */
+
+.auth-loading {
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+}
+
+.login-title {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.login-sub {
+  font-size: 13.5px;
+  color: var(--ink-secondary);
+  margin: 4px 0 20px;
+}
+
+.login-error {
+  font-size: 13px;
+  color: var(--pri-high-ink);
+  margin: 12px 0 0;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 20px;
 }
 
 /* ---------- bottom tabs ---------- */
