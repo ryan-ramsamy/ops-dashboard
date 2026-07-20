@@ -133,6 +133,14 @@ body {
   padding: 0;
 }
 
+html {
+  /* Belt-and-braces alongside the viewport meta's user-scalable=no:
+     kills double-tap-to-zoom and pinch-zoom everywhere while leaving
+     normal scrolling untouched. .swipe-content overrides to pan-y so
+     its horizontal drag gesture isn't fought by the browser. */
+  touch-action: manipulation;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -151,6 +159,7 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 /* ---------- layout ---------- */
@@ -1056,6 +1065,9 @@ button {
   border-radius: 12px;
   padding: 9px 12px;
   font: inherit;
+  /* iOS Safari auto-zooms on focus into any input under 16px — this
+     overrides the inherited 15px body size to prevent that. */
+  font-size: 16px;
   color: var(--ink);
   background: var(--bg);
   outline: none;
