@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react';
 
-// Tight-arc offsets from the FAB's own position — kept close (≤~100px)
-// on purpose, not a sweep across the screen. Order is the visual fan-out
-// order (Today nearest-vertical, Schedule farthest toward horizontal).
+// Tight-arc offsets from the FAB's own position, verified (via measured
+// bounding boxes, not just eyeballed) to leave a real gap between every
+// chip and the FAB and between every pair of chips at 375-430px widths —
+// each chip's own width differs (longer labels are wider), so the offsets
+// below aren't a smooth formula, they're chosen to clear the two widest
+// labels' footprints specifically. See src/components/FabMenu.jsx history
+// if these ever need re-tuning after a label/icon change.
 const CHIPS = [
   {
     key: 'today',
     label: 'Today',
-    dx: -6,
-    dy: -78,
+    dx: -55,
+    dy: -118,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="4.2" />
@@ -19,8 +23,8 @@ const CHIPS = [
   {
     key: 'tomorrow',
     label: 'Tomorrow',
-    dx: -60,
-    dy: -55,
+    dx: -95,
+    dy: -62,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 12h16M13 5l7 7-7 7" />
@@ -30,8 +34,8 @@ const CHIPS = [
   {
     key: 'schedule',
     label: 'Schedule',
-    dx: -100,
-    dy: -8,
+    dx: -70,
+    dy: -14,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3.5" y="5" width="17" height="16" rx="3" />
